@@ -2,6 +2,10 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
+import HomeEntrenador from "./pages/HomeEntrenador/HomeEntrenador";
+import HomeAlumno from "./pages/HomeAlumno/HomeAlumno";
+
+
 
 function App() {
   return (
@@ -12,8 +16,13 @@ function App() {
       {/* Rutas individuales */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/home" element={<HomeEntrenador />} />
+      <Route path="/homeAlumno" element={<HomeAlumno />} />
+  
 
-      {/* Ruta por defecto */}
+
+
+      
       <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
     </Routes>
   );
