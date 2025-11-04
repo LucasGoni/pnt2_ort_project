@@ -1,5 +1,6 @@
 import React from "react";
-import "./Login.css"; // lo creamos abajo
+import "./Login.css";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   return (
@@ -29,9 +30,9 @@ export default function Login() {
 
         <p className="login-register">
           ¿No tenés cuenta?{" "}
-          <a href="#" className="login-link">
+          <Link to="/register" className="login-link">
             Registrate
-          </a>
+          </Link>
         </p>
       </div>
     </div>
