@@ -46,7 +46,7 @@ export default function Signup() {
 
         <p className="signup-login">
           ¿Ya tenés cuenta?{" "}
-          <Link to="/login" className="register-link">
+          <Link to="/" className="register-link">
             Iniciá sesión
           </Link>
         </p>

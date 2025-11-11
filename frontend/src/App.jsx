@@ -10,19 +10,10 @@ import HomeAlumno from "./pages/HomeAlumno/HomeAlumno";
 function App() {
   return (
     <Routes>
-      {/* Ruta principal redirige a login */}
-      <Route path="/" element={<Navigate to="/login" />} />
-
-      {/* Rutas individuales */}
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/home" element={<HomeEntrenador />} />
-      <Route path="/homeAlumno" element={<HomeAlumno />} />
-  
-
-
-
-      
+      <Route path="/entrenador" element={<HomeEntrenador />} />
+      <Route path="/alumno" element={<HomeAlumno />} />
       <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
     </Routes>
   );
