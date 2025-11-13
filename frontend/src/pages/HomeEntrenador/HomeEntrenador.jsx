@@ -1,5 +1,6 @@
 import React from "react";
 import "./HomeEntrenador.css";
+import { Link } from "react-router-dom";
 
 function HomeEntrenador() {
   return (
@@ -12,31 +13,31 @@ function HomeEntrenador() {
           <div className="card">
             <h3>📋 Ver alumnos</h3>
             <p>Consulta la lista de tus alumnos y sus datos de progreso.</p>
-            <button>Ir</button>
+            <Link to="/entrenador/alumnos" className="btn-ruta">Ver alumnos</Link>
           </div>
 
           <div className="card">
             <h3>➕ Crear plan</h3>
             <p>Diseñá un nuevo plan de entrenamiento personalizado.</p>
-            <button>Ir</button>
+            <Link to="/entrenador/crear-plan" className="btn-ruta">Crear plan</Link>
           </div>
 
           <div className="card">
             <h3>🏋️‍♀️ Rutinas</h3>
             <p>Visualizá y editá las rutinas de entrenamiento disponibles.</p>
-            <button>Ir</button>
+            <Link to="/entrenador/rutinas" className="btn-ruta">Ver rutinas</Link>
           </div>
 
           <div className="card">
             <h3>📊 Progreso</h3>
             <p>Monitoreá el rendimiento de cada alumno a lo largo del tiempo.</p>
-            <button>Ir</button>
+            <Link to="/entrenador/progreso" className="btn-ruta">Ver progreso</Link>
           </div>
         </div>
       </main>
 
       <footer className="footer">
-        <button className="logout-btn">Cerrar sesión</button>
+        <Link to="/logout" className="logout-btn">Cerrar sesión</Link>
       </footer>
     </div>
   );
