@@ -1,7 +1,10 @@
 import React from "react";
 import "./HomeEntrenador.css";
+import { useNavigate } from "react-router-dom";
 
 function HomeEntrenador() {
+  const navigate = useNavigate();
+
   return (
     <div className="home-container">
       <main className="home-main">
@@ -29,8 +32,18 @@ function HomeEntrenador() {
 
           <div className="card">
             <h3>📊 Progreso</h3>
-            <p>Monitoreá el rendimiento de cada alumno a lo largo del tiempo.</p>
+            <p>
+              Monitoreá el rendimiento de cada alumno a lo largo del tiempo.
+            </p>
             <button>Ir</button>
+          </div>
+
+          <div className="card">
+            <h3>📅 Calendario</h3>
+            <p>Ver alumnos que entrenan cada día.</p>
+            <button onClick={() => navigate("/calendario/entrenador")}>
+              Ver calendario
+            </button>
           </div>
         </div>
       </main>
