@@ -102,3 +102,90 @@
 .logout-btn:hover {
   color: #4b2e83;
 }
+
+/* ===== Modal alumnos ===== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0; /* top, right, bottom, left: 0 */
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px 24px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+}
+
+.modal-close:hover {
+  color: #111;
+}
+
+/* ====== POPUP ALUMNOS ====== */
+
+.popup-overlay {
+  position: fixed;
+  inset: 0; /* top, right, bottom, left */
+  background: rgba(0, 0, 0, 0.5); /* oscurece pero se ve el Home atrás */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999; /* aseguramos que quede por encima del Home */
+}
+
+.popup-panel {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  padding: 16px 20px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.popup-header h3 {
+  margin: 0;
+}
+
+.popup-close {
+  border: none;
+  background: transparent;
+  font-size: 1.6rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.popup-body {
+  overflow-y: auto;
+}

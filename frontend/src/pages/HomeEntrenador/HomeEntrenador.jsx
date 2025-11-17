@@ -1,9 +1,20 @@
-import React from "react";
+// src/pages/HomeEntrenador/HomeEntrenador.jsx
+import React, { useState } from "react";
 import "./HomeEntrenador.css";
 import { useNavigate } from "react-router-dom";
+import ListadoAlumnos from "../../components/ListadoAlumnos/ListadoAlumnos";
 
 function HomeEntrenador() {
   const navigate = useNavigate();
+  const [mostrarPopupAlumnos, setMostrarPopupAlumnos] = useState(false);
+
+  const abrirPopupAlumnos = () => {
+    setMostrarPopupAlumnos(true);
+  };
+
+  const cerrarPopupAlumnos = () => {
+    setMostrarPopupAlumnos(false);
+  };
 
   return (
     <div className="home-container">
@@ -15,7 +26,7 @@ function HomeEntrenador() {
           <div className="card">
             <h3>📋 Ver alumnos</h3>
             <p>Consulta la lista de tus alumnos y sus datos de progreso.</p>
-            <button>Ir</button>
+            <button onClick={abrirPopupAlumnos}>Mis alumnos</button>
           </div>
 
           <div className="card">
@@ -51,6 +62,27 @@ function HomeEntrenador() {
       <footer className="footer">
         <button className="logout-btn">Cerrar sesión</button>
       </footer>
+
+      {/* 🔹 POPUP ALUMNOS (Home queda de fondo) */}
+      {mostrarPopupAlumnos && (
+        <div className="popup-overlay" onClick={cerrarPopupAlumnos}>
+          <div
+            className="popup-panel"
+            onClick={(e) => e.stopPropagation()} // para que no se cierre al hacer click adentro
+          >
+            <div className="popup-header">
+              <h3>Mis alumnos</h3>
+              <button className="popup-close" onClick={cerrarPopupAlumnos}>
+                ×
+              </button>
+            </div>
+
+            <div className="popup-body">
+              <ListadoAlumnos />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
