@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import "../../App.css"; // o un CSS propio tipo ./EntrenadorAlumnos.css
+import "../../App.css";
 import DataList from "../../components/DataList/DataList.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
-import { getAlumnosByEntrenador } from "../../services/alumnosService.js";
 
 export default function EntrenadorAlumnos() {
-  const { user } = useAuth(); // esperamos algo como { id, role, email }
+  const { user } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,11 +13,6 @@ export default function EntrenadorAlumnos() {
 
     (async () => {
       setLoading(true);
-      console.log("Entrenador logueado:", user);
-
-      const data = await getAlumnosByEntrenador(user.id);
-      console.log("Alumnos del entrenador:", data);
-
       if (alive) {
         setRows(data);
         setLoading(false);

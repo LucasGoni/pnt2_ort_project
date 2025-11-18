@@ -1,10 +1,8 @@
 import React from "react";
 import "./HomeEntrenador.css";
-<<<<<<< HEAD
 import { Link } from "react-router-dom";
-=======
 import { useNavigate } from "react-router-dom";
->>>>>>> main
+
 
 function HomeEntrenador() {
   const navigate = useNavigate();
