@@ -1,7 +1,10 @@
 import React from "react";
 import "./HomeAlumno.css";
+import { useNavigate } from "react-router-dom";
 
 function HomeAlumno() {
+  const navigate = useNavigate();
+
   return (
     <div className="home-container">
       <main className="home-main">
@@ -19,7 +22,7 @@ function HomeAlumno() {
           <div className="card">
             <h3>📅 Calendario</h3>
             <p>Revisá tus días de entrenamiento y próximos objetivos.</p>
-            <button>Ver calendario</button>
+            <button onClick={() => navigate("/calendario/alumno")}>Ver calendario</button>
           </div>
 
           <div className="card">

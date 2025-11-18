@@ -1,0 +1,33 @@
+.calendar-page {
+  max-width: 1000px;
+  margin: 50px auto;
+  background-color: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-title {
+  text-align: center;
+  color: #6d28d9;
+  margin-bottom: 20px;
+}
+
+/* Refuerzo: que NADA los estire en esta página */
+.calendar-page .rbc-toolbar button {
+  width: auto !important;
+  flex: 0 0 auto !important;
+}
+
+/* Orden del toolbar en 3 columnas para esta página */
+.calendar-page .rbc-toolbar {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.calendar-page .rbc-toolbar .rbc-btn-group {
+  display: inline-flex !important;
+  gap: 6px !important;
+}

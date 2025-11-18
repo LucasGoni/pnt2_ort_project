@@ -4,7 +4,11 @@ import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
 import HomeEntrenador from "./pages/HomeEntrenador/HomeEntrenador.jsx";
 import HomeAlumno from "./pages/HomeAlumno/HomeAlumno.jsx";
-import EntrenadorAlumnos from "./pages/EntrenadorAlumnos/EntrenadorAlumnos.jsx"; // 👈 nueva
+import EntrenadorAlumnos from "./pages/EntrenadorAlumnos/EntrenadorAlumnos.jsx"; 
+import CalendarAlumnoPage from "./pages/Calendar/CalendarAlumnoPage.jsx";
+import CalendarEntrenadorPage from "./pages/Calendar/CalendarEntrenadorPage.jsx";
+
+
 
 function App() {
   return (
@@ -14,10 +18,9 @@ function App() {
       <Route path="/entrenador" element={<HomeEntrenador />} />
       <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} /> {/* nueva */}
       <Route path="/alumno" element={<HomeAlumno />} />
-      <Route
-        path="*"
-        element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>}
-      />
+      <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
+      <Route path="/calendario/alumno" element={<CalendarAlumnoPage />} />
+      <Route path="/calendario/entrenador" element={<CalendarEntrenadorPage />} />
     </Routes>
   );
 }
