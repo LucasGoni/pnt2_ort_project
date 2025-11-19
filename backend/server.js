@@ -1,12 +1,16 @@
 import express from 'express'
 
+import RouterAuth from './router/auth.js'
+
 class Server {
     #port = null
     #app = null
+    #routerAuth = null
 
     constructor(port) {
         this.#port = port
         this.#app = express()
+        this.#routerAuth = new RouterAuth().config()
         this.#config()
     }
 
@@ -22,6 +26,7 @@ class Server {
             })
         })
 
+        this.#app.use('/api/auth', this.#routerAuth)
     }
 
     start() {
