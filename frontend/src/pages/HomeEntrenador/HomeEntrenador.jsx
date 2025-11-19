@@ -15,29 +15,39 @@ function HomeEntrenador() {
 
         <div className="card-grid">
           <div className="card">
-            <h3>📋 Ver alumnos</h3>
+            <h3>👤 Ver alumnos</h3>
             <p>Consulta la lista de tus alumnos y sus datos de progreso.</p>
-            <Link to="/entrenador/alumnos" className="btn-ruta">Ver alumnos</Link>
+            <button onClick={() => navigate("/entrenador/alumnos")}>
+            Ver Alumnos</button>
           </div>
 
           <div className="card">
-            <h3>➕ Crear plan</h3>
+            <h3>📋 Crear plan</h3>
             <p>Diseñá un nuevo plan de entrenamiento personalizado.</p>
-            <Link to="/entrenador/crear-plan" className="btn-ruta">Crear plan</Link>
+            <button onClick={() => navigate("/entrenador")}>
+            Crear Plan</button>
           </div>
 
           <div className="card">
-            <h3>🏋️‍♀️ Rutinas</h3>
+            <h3>💪 Rutinas</h3>
             <p>Visualizá y editá las rutinas de entrenamiento disponibles.</p>
-            <Link to="/entrenador/rutinas" className="btn-ruta">Ver rutinas</Link>
+            <button onClick={() => navigate("/entrenador/rutinas")}>
+            Ver rutinas</button>
           </div>
-
 
           <div className="card">
             <h3>📅 Calendario</h3>
             <p>Ver alumnos que entrenan cada día.</p>
             <button onClick={() => navigate("/calendario/entrenador")}>
               Ver calendario
+            </button>
+          </div>
+
+          <div className="card">
+            <h3>🏋️ Ejercicios</h3>
+            <p>Ver y gestionar los ejercicios disponibles.</p>
+            <button onClick={() => navigate("/entrenador/ejercicios")}>
+              Ver ejercicios
             </button>
           </div>
         </div>

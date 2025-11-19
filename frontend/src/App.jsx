@@ -7,6 +7,7 @@ import HomeAlumno from "./pages/HomeAlumno/HomeAlumno.jsx";
 import EntrenadorAlumnos from "./pages/EntrenadorAlumnos/EntrenadorAlumnos.jsx"; 
 import CalendarAlumnoPage from "./pages/Calendar/CalendarAlumnoPage.jsx";
 import CalendarEntrenadorPage from "./pages/Calendar/CalendarEntrenadorPage.jsx";
+import EntrenadorRutinas from "./pages/EntrenadorRutinas/EntrenadorRutinas.jsx";
 
 
 
@@ -16,7 +17,8 @@ function App() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/entrenador" element={<HomeEntrenador />} />
-      <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} /> {/* nueva */}
+      <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} /> 
+      <Route path="/entrenador/rutinas" element={<EntrenadorRutinas />} />
       <Route path="/alumno" element={<HomeAlumno />} />
       <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
       <Route path="/calendario/alumno" element={<CalendarAlumnoPage />} />
