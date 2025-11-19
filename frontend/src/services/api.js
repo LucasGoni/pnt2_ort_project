@@ -1,4 +1,5 @@
 import axios from "axios";
+import storage from "./storage";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
@@ -8,10 +9,13 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    const storedAuth = await storage.getItem("auth");
+    if (storedAuth) {
+      const { token } = JSON.parse(storedAuth);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -24,10 +28,9 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      await storage.removeItem("auth");
 
       if (window.location.pathname !== "/") {
         window.location.href = "/";
@@ -35,11 +38,15 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 403) {
-      console.error("Access forbidden:", error.response.data?.message);
+      if (import.meta.env.DEV) {
+        console.error("Access forbidden:", error.response.data?.message);
+      }
     }
 
     if (error.response?.status >= 500) {
-      console.error("Server error:", error.response.data?.message);
+      if (import.meta.env.DEV) {
+        console.error("Server error:", error.response.data?.message);
+      }
     }
 
     return Promise.reject(error);
