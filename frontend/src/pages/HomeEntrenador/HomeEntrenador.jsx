@@ -1,6 +1,8 @@
 import React from "react";
 import "./HomeEntrenador.css";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+
 
 function HomeEntrenador() {
   const navigate = useNavigate();
@@ -13,29 +15,24 @@ function HomeEntrenador() {
 
         <div className="card-grid">
           <div className="card">
-            <h3>📋 Ver alumnos</h3>
+            <h3>👤 Ver alumnos</h3>
             <p>Consulta la lista de tus alumnos y sus datos de progreso.</p>
-            <button>Ir</button>
+            <button onClick={() => navigate("/entrenador/alumnos")}>
+            Ver Alumnos</button>
           </div>
 
           <div className="card">
-            <h3>➕ Crear plan</h3>
+            <h3>📋 Crear plan</h3>
             <p>Diseñá un nuevo plan de entrenamiento personalizado.</p>
-            <button>Ir</button>
+            <button onClick={() => navigate("/entrenador")}>
+            Crear Plan</button>
           </div>
 
           <div className="card">
-            <h3>🏋️‍♀️ Rutinas</h3>
+            <h3>💪 Rutinas</h3>
             <p>Visualizá y editá las rutinas de entrenamiento disponibles.</p>
-            <button>Ir</button>
-          </div>
-
-          <div className="card">
-            <h3>📊 Progreso</h3>
-            <p>
-              Monitoreá el rendimiento de cada alumno a lo largo del tiempo.
-            </p>
-            <button>Ir</button>
+            <button onClick={() => navigate("/entrenador/rutinas")}>
+            Ver rutinas</button>
           </div>
 
           <div className="card">
@@ -45,11 +42,19 @@ function HomeEntrenador() {
               Ver calendario
             </button>
           </div>
+
+          <div className="card">
+            <h3>🏋️ Ejercicios</h3>
+            <p>Ver y gestionar los ejercicios disponibles.</p>
+            <button onClick={() => navigate("/entrenador/ejercicios")}>
+              Ver ejercicios
+            </button>
+          </div>
         </div>
       </main>
 
       <footer className="footer">
-        <button className="logout-btn">Cerrar sesión</button>
+        <Link to="/logout" className="logout-btn">Cerrar sesión</Link>
       </footer>
     </div>
   );
