@@ -1,29 +1,63 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import RoleRoute from "./components/RoleRoute";
 import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
 import HomeEntrenador from "./pages/HomeEntrenador/HomeEntrenador.jsx";
 import HomeAlumno from "./pages/HomeAlumno/HomeAlumno.jsx";
-import EntrenadorAlumnos from "./pages/EntrenadorAlumnos/EntrenadorAlumnos.jsx"; 
+import EntrenadorAlumnos from "./pages/EntrenadorAlumnos/EntrenadorAlumnos.jsx";
 import CalendarAlumnoPage from "./pages/Calendar/CalendarAlumnoPage.jsx";
 import CalendarEntrenadorPage from "./pages/Calendar/CalendarEntrenadorPage.jsx";
 import EntrenadorRutinas from "./pages/EntrenadorRutinas/EntrenadorRutinas.jsx";
 
-
-
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/entrenador" element={<HomeEntrenador />} />
-      <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} /> 
-      <Route path="/entrenador/rutinas" element={<EntrenadorRutinas />} />
-      <Route path="/alumno" element={<HomeAlumno />} />
-      <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
-      <Route path="/calendario/alumno" element={<CalendarAlumnoPage />} />
-      <Route path="/calendario/entrenador" element={<CalendarEntrenadorPage />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/entrenador"
+          element={
+            <RoleRoute allowedRoles={["entrenador"]}>
+              <HomeEntrenador />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/alumno"
+          element={
+            <RoleRoute allowedRoles={["alumno"]}>
+              <HomeAlumno />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/calendario/alumno"
+          element={
+            <RoleRoute allowedRoles={["alumno"]}>
+              <CalendarAlumnoPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/calendario/entrenador"
+          element={
+            <RoleRoute allowedRoles={["entrenador"]}>
+              <CalendarEntrenadorPage />
+            </RoleRoute>
+          }
+        />
+        <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} />
+        <Route path="/entrenador/rutinas" element={<EntrenadorRutinas />} />
+
+        <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
+      </Routes>
+    </AuthProvider>
   );
 }
 
