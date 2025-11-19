@@ -3,10 +3,12 @@ import { AuthProvider } from "./context/AuthContext";
 import RoleRoute from "./components/RoleRoute";
 import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
-import HomeEntrenador from "./pages/HomeEntrenador/HomeEntrenador";
-import HomeAlumno from "./pages/HomeAlumno/HomeAlumno";
+import HomeEntrenador from "./pages/HomeEntrenador/HomeEntrenador.jsx";
+import HomeAlumno from "./pages/HomeAlumno/HomeAlumno.jsx";
+import EntrenadorAlumnos from "./pages/EntrenadorAlumnos/EntrenadorAlumnos.jsx";
 import CalendarAlumnoPage from "./pages/Calendar/CalendarAlumnoPage.jsx";
 import CalendarEntrenadorPage from "./pages/Calendar/CalendarEntrenadorPage.jsx";
+import EntrenadorRutinas from "./pages/EntrenadorRutinas/EntrenadorRutinas.jsx";
 
 function App() {
   return (
@@ -50,6 +52,8 @@ function App() {
             </RoleRoute>
           }
         />
+        <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} />
+        <Route path="/entrenador/rutinas" element={<EntrenadorRutinas />} />
 
         <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
       </Routes>
