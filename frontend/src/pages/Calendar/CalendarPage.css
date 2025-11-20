@@ -7,13 +7,26 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.calendar-title {
-  text-align: center;
-  color: #6d28d9;
+.calendar-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
-/* Refuerzo: que NADA los estire en esta página */
+.calendar-title {
+  text-align: center;
+  color: #6d28d9;
+  margin: 0;
+}
+
+.calendar-header-spacer {
+  display: block;
+  min-width: 125px;
+}
+
+/* Refuerzo: que nada los estire en esta página */
 .calendar-page .rbc-toolbar button {
   width: auto !important;
   flex: 0 0 auto !important;

@@ -4,7 +4,7 @@ import { Calendar as RBCalendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import "./Calendar.css"; 
+import "./Calendar.css";
 
 const locales = { es };
 const localizer = dateFnsLocalizer({
@@ -26,14 +26,14 @@ export default function Calendar({
   events,
   defaultView = "month",
 }) {
-  // Datos mock mientras no hay backend:
   const demoEvents = useMemo(() => {
     const baseM = new Date().getMonth();
     const baseY = new Date().getFullYear();
+
     if (mode === "alumno") {
       return [
         {
-          title: "Pecho y tríceps",
+          title: "Pecho y tr\u00edceps",
           start: new Date(baseY, baseM, 12, 10, 0),
           end: new Date(baseY, baseM, 12, 11, 0),
           kind: "entreno",
@@ -52,34 +52,35 @@ export default function Calendar({
         },
       ];
     }
+
     // entrenador: cada evento es un alumno
     return [
       {
-        title: "Ana López",
+        title: "Ana L\u00f3pez",
         start: new Date(baseY, baseM, 13, 9, 0),
         end: new Date(baseY, baseM, 13, 9, 45),
         kind: "alumno",
       },
       {
-        title: "Juan Pérez",
+        title: "Juan P\u00e9rez",
         start: new Date(baseY, baseM, 13, 10, 0),
         end: new Date(baseY, baseM, 13, 10, 30),
         kind: "alumno",
       },
       {
-        title: "Luisa Martínez",
+        title: "Luisa Mart\u00ednez",
         start: new Date(baseY, baseM, 13, 11, 0),
         end: new Date(baseY, baseM, 13, 11, 40),
         kind: "alumno",
       },
       {
-        title: "Ezequiel Gómez",
+        title: "Ezequiel G\u00f3mez",
         start: new Date(baseY, baseM, 13, 12, 0),
         end: new Date(baseY, baseM, 13, 12, 30),
         kind: "alumno",
       },
       {
-        title: "Marta Díaz",
+        title: "Marta D\u00edaz",
         start: new Date(baseY, baseM, 13, 13, 0),
         end: new Date(baseY, baseM, 13, 13, 30),
         kind: "alumno",
@@ -89,41 +90,26 @@ export default function Calendar({
 
   const data = events ?? demoEvents;
 
-  // Colores distintos según modo (opcional)
-  //   const eventPropGetter = (event) => {
-  //     const bg =
-  //       mode === "alumno" ? "#7c3aed" : "#2563eb"; // violeta alumno / azul entrenador
-  //     return {
-  //       style: {
-  //         backgroundColor: bg,
-  //         borderRadius: "6px",
-  //         border: "none",
-  //         color: "white",
-  //         padding: "2px 6px",
-  //       },
-  //     };
-  //   };
-
   return (
-    <div style={{ height: "calc(100vh - 150px)", minHeight: 520 }}>
+    <div className="calendar-container">
       <RBCalendar
         localizer={localizer}
         events={data}
         startAccessor="start"
         endAccessor="end"
         defaultView={defaultView}
-        popup // <- habilita el popup “+N más”
-        toolbar // toolbar con Mes/Semana/Día
+        popup // muestra el "+N m\u00e1s" en la vista mes
+        toolbar // toolbar con Mes/Semana/D\u00eda
         // eventPropGetter={eventPropGetter}
         messages={{
           month: "Mes",
           week: "Semana",
-          day: "Día",
+          day: "D\u00eda",
           agenda: "Agenda",
           today: "Hoy",
           previous: "Anterior",
           next: "Siguiente",
-          showMore: (total) => `+${total} más`,
+          showMore: (total) => `+${total} m\u00e1s`,
           noEventsInRange: "Sin eventos en este rango",
         }}
       />

@@ -1,0 +1,29 @@
+.back-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: 1px solid #6d28d9;
+  color: #6d28d9;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.12);
+}
+
+.back-menu-btn:hover {
+  background-color: #6d28d9;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.back-menu-btn:active {
+  transform: translateY(0);
+}
+
+.back-menu-btn:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 2px;
+}

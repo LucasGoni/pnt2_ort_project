@@ -1,4 +1,9 @@
 /* src/components/Calendar/Calendar.css */
+.calendar-container {
+  height: calc(100vh - 150px);
+  min-height: 520px;
+}
+
 .rbc-toolbar .rbc-btn-group button {
   border-radius: 8px;
   padding: 6px 10px;
@@ -8,7 +13,7 @@
   color: #fff;
   border: none;
 }
-/* --- FIX superposición botones react-big-calendar --- */
+/* --- fix superposición botones react-big-calendar --- */
 .rbc-toolbar button {
   width: auto !important;
   flex: 0 0 auto !important;
