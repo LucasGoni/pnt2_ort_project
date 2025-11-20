@@ -1,0 +1,78 @@
+.ejercicios-page {
+  gap: 1.25rem;
+}
+
+.ej-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.primary-btn.ghost {
+  background: transparent;
+  color: #5d3fd3;
+  border: 1px solid #c7b7ff;
+}
+.primary-btn.ghost:hover {
+  background: #f4f0ff;
+}
+
+.ej-form {
+  background: #fff;
+  padding: 1.2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  display: grid;
+  gap: 0.75rem;
+  max-width: 520px;
+}
+
+.ej-form input,
+.ej-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ej-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ej-table-wrap {
+  margin-top: 1rem;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.ej-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ej-table th,
+.ej-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef1f4;
+}
+
+.ej-table th {
+  text-align: left;
+  background: #f7f7ff;
+  font-weight: 700;
+  color: #4b4b6f;
+}
+
+.ej-thumb {
+  max-height: 60px;
+  border-radius: 6px;
+}
+
+@media (max-width: 640px) {
+  .ej-form {
+    max-width: 100%;
+  }
+}

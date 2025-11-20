@@ -1,0 +1,82 @@
+.plan-page {
+  gap: 1.4rem;
+}
+
+.plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.plan-kicker {
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #7a6de0;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.plan-badge {
+  background: #f7f7ff;
+  color: #5d3fd3;
+  border: 1px solid #d9d2ff;
+  padding: 0.6rem 0.9rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(93, 63, 211, 0.08);
+  font-weight: 700;
+}
+
+.plan-card {
+  background: #fff;
+  padding: 1.2rem;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  display: grid;
+  gap: 1rem;
+  max-width: 720px;
+  margin: 0 auto;
+  border: 1px solid #eef1f4;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.plan-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #4b4b6f;
+}
+
+.plan-field span {
+  font-size: 0.92rem;
+}
+
+.plan-field select,
+.plan-field input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.plan-submit {
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.plan-alert {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: #e5f6ed;
+  color: #0f5132;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  max-width: 720px;
+}
