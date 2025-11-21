@@ -30,6 +30,12 @@ class UsuariosRepo {
         const usuario = await this.#usuarioModel.findByPk(id)
         return usuario ? usuario.get({ plain: true }) : null
     }
+
+    listarPorRol = async rol => {
+        await this.#ensureReady()
+        const rows = await this.#usuarioModel.findAll({ where: { rol }, order: [['id', 'ASC']] })
+        return rows.map(r => r.get({ plain: true }))
+    }
 }
 
 export default UsuariosRepo

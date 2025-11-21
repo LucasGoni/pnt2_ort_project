@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "../../App.css";
 import "./EntrenadorRutinas.css";
-import { useAuth } from "../../hooks/useAuth.js";
+import { useAuth } from "../../context/AuthContext";
 import { agregarEjercicioARutina, crearRutina, getRutinasByEntrenador } from "../../services/rutinasServices.js";
 import { getEjercicios } from "../../services/ejerciciosService.js";
 import BackButton from "../../components/BackButton.jsx";

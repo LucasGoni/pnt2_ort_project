@@ -84,3 +84,26 @@ button:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 16px rgba(120, 96, 255, 0.12);
 }
+
+.pool-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.pool-row {
+  background: #fff;
+  border: 1px solid #e5e1ff;
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pool-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
