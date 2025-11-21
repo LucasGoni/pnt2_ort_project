@@ -3,6 +3,7 @@ import "../../App.css";
 import DataList from "../../components/DataList"; // 👈 nuevo import (usa index.jsx)
 import { useAuth } from "../../hooks/useAuth.js";
 import { getAlumnosByEntrenador } from "../../services/alumnosServices.js"; // 👈 ajustá el nombre al de tu servicio real
+import BackButton from "../../components/BackButton.jsx";
 
 export default function EntrenadorAlumnos() {
   const { user } = useAuth();
@@ -92,6 +93,7 @@ export default function EntrenadorAlumnos() {
   return (
     <div className="home-container">
       <main className="home-main">
+        <BackButton />
         <h2 className="welcome">Mis alumnos</h2>
         <p className="subtitle">
           Listado de alumnos asociados a este entrenador.

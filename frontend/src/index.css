@@ -63,3 +63,24 @@ button:hover {
   border: 1px solid #ddd;
   font-size: 1rem;
 }
+
+.back-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #d9d2ff;
+  background: #ffffff;
+  color: #4b4b6f;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(120, 96, 255, 0.08);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.back-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(120, 96, 255, 0.12);
+}

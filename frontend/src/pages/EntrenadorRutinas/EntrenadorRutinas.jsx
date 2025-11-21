@@ -4,18 +4,21 @@ import "./EntrenadorRutinas.css";
 import { useAuth } from "../../hooks/useAuth.js";
 import { agregarEjercicioARutina, crearRutina, getRutinasByEntrenador } from "../../services/rutinasServices.js";
 import { getEjercicios } from "../../services/ejerciciosService.js";
+import BackButton from "../../components/BackButton.jsx";
 
 export default function EntrenadorRutinas() {
   const { user } = useAuth(); // { id, role, email, ... }
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ejercicios, setEjercicios] = useState([]);
-  const [form, setForm] = useState({ rutinaId: "", ejercicioId: "", repeticiones: "", peso: "" });
+  const [formsEjercicio, setFormsEjercicio] = useState({});
   const [ejercicioNuevo, setEjercicioNuevo] = useState({ nombre: "", descripcion: "" });
   const [rutinaNueva, setRutinaNueva] = useState({ titulo: "", nivel: "Inicial", duracionMin: 30, objetivo: "", estado: "activa" });
   const [expandedId, setExpandedId] = useState(null);
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(6);
+  const [showCrearRutina, setShowCrearRutina] = useState(false);
+  const [showNuevoEjercicio, setShowNuevoEjercicio] = useState(false);
 
 
   useEffect(() => {
@@ -58,8 +61,15 @@ export default function EntrenadorRutinas() {
   }, [rows]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    const { name, value, dataset } = e.target;
+    const rutinaId = dataset.rutina;
+    setFormsEjercicio(prev => ({
+      ...prev,
+      [rutinaId]: {
+        ...(prev[rutinaId] || { ejercicioId: "", repeticiones: "", peso: "" }),
+        [name]: value
+      }
+    }));
   };
 
   const handleRutinaChange = (e) => {
@@ -72,9 +82,10 @@ export default function EntrenadorRutinas() {
     setEjercicioNuevo(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAdd = async (e) => {
+  const handleAdd = async (rutinaId, e) => {
     e.preventDefault();
-    if (!form.rutinaId || !form.ejercicioId || !form.repeticiones) return;
+    const form = formsEjercicio[rutinaId];
+    if (!form?.ejercicioId || !form?.repeticiones) return;
     const ejercicioBase = ejercicios.find(ej => ej.id === form.ejercicioId);
     if (!ejercicioBase) return;
 
@@ -84,10 +95,10 @@ export default function EntrenadorRutinas() {
       peso: form.peso
     };
 
-    const updated = await agregarEjercicioARutina(form.rutinaId, payload);
+    const updated = await agregarEjercicioARutina(rutinaId, payload);
     if (updated) {
       setRows(prev => prev.map(r => r.id === updated.id ? { ...updated } : r));
-      setForm({ rutinaId: "", ejercicioId: "", repeticiones: "", peso: "" });
+      setFormsEjercicio(prev => ({ ...prev, [rutinaId]: { ejercicioId: "", repeticiones: "", peso: "" } }));
     }
   };
 
@@ -115,6 +126,13 @@ export default function EntrenadorRutinas() {
     };
     setEjercicios(prev => [nuevo, ...prev]);
     setEjercicioNuevo({ nombre: "", descripcion: "" });
+    // preseleccionamos el nuevo ejercicio en el formulario abierto
+    if (expandedId) {
+      setFormsEjercicio(prev => ({
+        ...prev,
+        [expandedId]: { ...(prev[expandedId] || {}), ejercicioId: nuevo.id }
+      }));
+    }
   };
 
   const toggleExpand = (id) => {
@@ -124,6 +142,7 @@ export default function EntrenadorRutinas() {
   return (
     <div className="home-container">
       <main className="home-main">
+        <BackButton />
         <h2 className="welcome">Mis rutinas</h2>
         <p className="subtitle">
           Administrá las rutinas asignadas a tus alumnos.
@@ -148,23 +167,89 @@ export default function EntrenadorRutinas() {
           </div>
         </div>
 
+        <div className="rutinas-actions">
+          <button
+            type="button"
+            className={`add-rutina-btn ${showCrearRutina ? "is-open" : ""}`}
+            onClick={() => setShowCrearRutina(prev => !prev)}
+          >
+            <div className="add-rutina-content">
+              <span className="rutina-row-title">
+                {showCrearRutina ? "Cerrar formulario" : "Agregar rutina"}
+              </span>
+              <div className="rutina-row-chips">
+                <span className="rutina-row-item">{rutinaNueva.duracionMin || 0} min</span>
+                <span className="rutina-row-item">{rutinaNueva.nivel || "Nivel"}</span>
+                <span className="rutina-row-item">{rutinaNueva.titulo || "Nombre"}</span>
+                <span className={`rutina-estado ${rutinaNueva.estado === "pausada" ? "pausada" : "activa"}`}>
+                  {rutinaNueva.estado === "pausada" ? "Pausada" : "Activa"}
+                </span>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {showCrearRutina && (
+          <div className="form-card">
+            <div className="form-card-header" />
+            <div className="form-card-body">
+              <h3 className="form-card-title">Nueva rutina</h3>
+              <form className="google-form" onSubmit={handleCrearRutina}>
+                <label>
+                  Nombre de la rutina
+                  <input name="titulo" value={rutinaNueva.titulo} onChange={handleRutinaChange} placeholder="Ej: Calistenia mañana" required />
+                </label>
+                <label>
+                  Nivel
+                  <select name="nivel" value={rutinaNueva.nivel} onChange={handleRutinaChange}>
+                    <option>Inicial</option>
+                    <option>Intermedio</option>
+                    <option>Avanzado</option>
+                  </select>
+                </label>
+                <label>
+                  Duración (min)
+                  <input name="duracionMin" type="number" min="5" value={rutinaNueva.duracionMin} onChange={handleRutinaChange} placeholder="30" required />
+                </label>
+                <label>
+                  Objetivo
+                  <input name="objetivo" value={rutinaNueva.objetivo} onChange={handleRutinaChange} placeholder="Hipertrofia, bajar grasa, resistencia..." />
+                </label>
+                <label>
+                  Estado
+                  <select name="estado" value={rutinaNueva.estado} onChange={handleRutinaChange}>
+                    <option value="activa">Activa</option>
+                    <option value="pausada">Pausada</option>
+                  </select>
+                </label>
+                <div className="form-actions">
+                  <button type="submit" className="primary-btn">Crear rutina</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <p>Cargando rutinas...</p>
         ) : (
-          <div className="rutinas-grid">
+          <div className="rutinas-list">
             {filtrados.map(r => (
-              <article key={r.id} className="rutina-card" onClick={() => toggleExpand(r.id)}>
-                <h3 className="rutina-title">{r.titulo}</h3>
-                <p className="rutina-nivel">{r.nivel}</p>
-                <div className="rutina-details">
-                  <div><span>Duración</span><strong>{r.duracionMin} min</strong></div>
-                  <div><span>Objetivo</span><strong>{r.objetivo}</strong></div>
-                  <div><span>Estado</span><strong>{r.estado === "activa" ? "Activa" : "Pausada"}</strong></div>
+              <article key={r.id} className="rutina-row" onClick={() => toggleExpand(r.id)}>
+                <div className="rutina-row-main">
+                  <span className="rutina-row-title">{r.titulo}</span>
+                  <span className="rutina-row-item">{r.duracionMin} min</span>
+                  <span className="rutina-row-item">{r.nivel}</span>
+                  {r.objetivo && <span className="rutina-row-item">{r.objetivo}</span>}
+                  <span className={`rutina-estado ${r.estado === "activa" ? "activa" : "pausada"}`}>
+                    {r.estado === "activa" ? "Activa" : "Pausada"}
+                  </span>
+                  <span className="rutina-toggle">{expandedId === r.id ? "▲" : "▼"}</span>
                 </div>
                 {expandedId === r.id && (
-                  <div style={{ borderTop: "1px solid #e7e7f5", marginTop: "0.5rem", paddingTop: "0.5rem" }}>
-                    <p style={{ margin: "0 0 0.35rem", fontWeight: 600, color: "#4b4b6f" }}>Ejercicios</p>
-                    <ul style={{ margin: 0, paddingLeft: "1.1rem", color: "#2f2f4f" }}>
+                  <div className="rutina-row-details">
+                    <p className="rutina-row-details-title">Ejercicios</p>
+                    <ul>
                       {(rutinaEjercicios[r.id] || []).map((ej, idx) => (
                         <li key={`${r.id}-${idx}`}>
                           {ej.nombre} — {ej.repeticiones} reps{ej.peso ? ` | ${ej.peso} kg` : ""}
@@ -172,6 +257,49 @@ export default function EntrenadorRutinas() {
                       ))}
                       {!rutinaEjercicios[r.id]?.length && <li>Sin ejercicios aún.</li>}
                     </ul>
+                    <div className="add-ejercicio">
+                      <button type="button" className="secondary-btn" onClick={(e) => { e.stopPropagation(); setFormsEjercicio(prev => ({ ...prev, [r.id]: prev[r.id] || { ejercicioId: "", repeticiones: "", peso: "" } })); toggleExpand(r.id); }}>
+                        Agregar ejercicio
+                      </button>
+                      {formsEjercicio[r.id] && (
+                        <div className="form-card form-card-inline" onClick={(e) => e.stopPropagation()}>
+                          <div className="form-card-header" />
+                          <div className="form-card-body">
+                            <h4 className="form-card-title">Agregar ejercicio</h4>
+                            <form className="google-form" onSubmit={(e) => handleAdd(r.id, e)}>
+                              <label>
+                                Elegí ejercicio
+                                <select name="ejercicioId" data-rutina={r.id} value={formsEjercicio[r.id]?.ejercicioId || ""} onChange={handleChange} required>
+                                  <option value="">Seleccionar</option>
+                                  {ejercicios.map(ej => <option key={ej.id} value={ej.id}>{ej.nombre}</option>)}
+                                </select>
+                              </label>
+                              <label>
+                                Repeticiones
+                                <input name="repeticiones" data-rutina={r.id} value={formsEjercicio[r.id]?.repeticiones || ""} onChange={handleChange} placeholder="Ej: 12" required />
+                              </label>
+                              <label>
+                                Peso (kg) opcional
+                                <input name="peso" data-rutina={r.id} value={formsEjercicio[r.id]?.peso || ""} onChange={handleChange} placeholder="Ej: 20" />
+                              </label>
+
+                              <details className="panel-details" open={showNuevoEjercicio}>
+                                <summary onClick={(e) => { e.preventDefault(); setShowNuevoEjercicio(prev => !prev); }}>Crear ejercicio nuevo</summary>
+                                <div className="panel-form" style={{ marginTop: "0.35rem" }}>
+                                  <input name="nombre" value={ejercicioNuevo.nombre} onChange={handleEjercicioNuevoChange} placeholder="Nombre ejercicio" />
+                                  <textarea name="descripcion" value={ejercicioNuevo.descripcion} onChange={handleEjercicioNuevoChange} placeholder="Descripción (opcional)" />
+                                  <button type="button" className="secondary-btn" onClick={handleCrearEjercicio}>Guardar ejercicio</button>
+                                </div>
+                              </details>
+
+                              <div className="form-actions">
+                                <button type="submit" className="primary-btn">Agregar a rutina</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </article>
@@ -179,54 +307,6 @@ export default function EntrenadorRutinas() {
             {!filtrados.length && <p>No hay rutinas que coincidan.</p>}
           </div>
         )}
-
-        <div className="rutinas-separator" />
-
-        <div className="rutinas-panels">
-          <section className="rutina-panel">
-            <h3 className="rutina-panel-title">Crear rutina</h3>
-            <form className="panel-form" onSubmit={handleCrearRutina}>
-              <input name="titulo" value={rutinaNueva.titulo} onChange={handleRutinaChange} placeholder="Nombre de la rutina" required />
-              <select name="nivel" value={rutinaNueva.nivel} onChange={handleRutinaChange}>
-                <option>Inicial</option>
-                <option>Intermedio</option>
-                <option>Avanzado</option>
-              </select>
-              <input name="duracionMin" type="number" min="5" value={rutinaNueva.duracionMin} onChange={handleRutinaChange} placeholder="Duración (min)" required />
-              <input name="objetivo" value={rutinaNueva.objetivo} onChange={handleRutinaChange} placeholder="Objetivo" />
-              <select name="estado" value={rutinaNueva.estado} onChange={handleRutinaChange}>
-                <option value="activa">Activa</option>
-                <option value="pausada">Pausada</option>
-              </select>
-              <button type="submit" className="primary-btn">Crear rutina</button>
-            </form>
-          </section>
-
-          <section className="rutina-panel">
-            <h3 className="rutina-panel-title">Agregar ejercicio a una rutina</h3>
-            <details className="panel-details">
-              <summary>Agregar nuevo ejercicio al listado</summary>
-              <form className="panel-form" onSubmit={handleCrearEjercicio}>
-                <input name="nombre" value={ejercicioNuevo.nombre} onChange={handleEjercicioNuevoChange} placeholder="Nombre ejercicio" required />
-                <input name="descripcion" value={ejercicioNuevo.descripcion} onChange={handleEjercicioNuevoChange} placeholder="Descripción (opcional)" />
-                <button type="submit" className="secondary-btn">Crear ejercicio</button>
-              </form>
-            </details>
-            <form className="panel-form" onSubmit={handleAdd}>
-              <select name="rutinaId" value={form.rutinaId} onChange={handleChange} required>
-                <option value="">Elegí rutina</option>
-                {rows.map(r => <option key={r.id} value={r.id}>{r.titulo}</option>)}
-              </select>
-              <select name="ejercicioId" value={form.ejercicioId} onChange={handleChange} required>
-                <option value="">Elegí ejercicio</option>
-                {ejercicios.map(ej => <option key={ej.id} value={ej.id}>{ej.nombre}</option>)}
-              </select>
-              <input name="repeticiones" value={form.repeticiones} onChange={handleChange} placeholder="Repeticiones" required />
-              <input name="peso" value={form.peso} onChange={handleChange} placeholder="Peso (kg) opcional" />
-              <button type="submit" className="primary-btn">Agregar</button>
-            </form>
-          </section>
-        </div>
       </main>
     </div>
   );
