@@ -22,6 +22,7 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor }) 
 
   const handleActionClick = (e, action) => {
     e.stopPropagation(); // que el click del botón no dispare el click de la carta
+    if (action.disabled) return;
     action.onClick?.(row);
   };
 
@@ -90,6 +91,7 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor }) 
                     type="button"
                     className={styles.actionBtn}
                     onClick={(e) => handleActionClick(e, action)}
+                    disabled={action.disabled}
                   >
                     {action.label}
                   </button>

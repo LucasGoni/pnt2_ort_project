@@ -1,10 +1,21 @@
-import { Router } from "express";
-import { getPlan, patchSesion, putAsignacion } from "../controlador/planController.js";
+import express from 'express'
+import AlumnosControlador from '../controlador/alumnos.js'
 
-const router = Router();
+class RouterAlumnos {
+    #controlador = null
 
-router.get("/:alumnoId/plan", getPlan);
-router.put("/:alumnoId/plan/asignacion", putAsignacion);
-router.patch("/:alumnoId/plan/sesiones/:fecha", patchSesion);
+    constructor() {
+        this.#controlador = new AlumnosControlador()
+    }
 
-export default router;
+    config = () => {
+        const router = express.Router()
+        router.get('/', this.#controlador.listar)
+        router.get('/disponibles', this.#controlador.listarDisponibles)
+        router.post('/:id/asignar', this.#controlador.asignar)
+        router.post('/:id/desasignar', this.#controlador.desasignar)
+        return router
+    }
+}
+
+export default RouterAlumnos

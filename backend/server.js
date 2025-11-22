@@ -1,15 +1,20 @@
 import express from 'express'
-import alumnosRouter from './router/alumnos.js'
+import RouterAuth from './router/auth.js'
+import RouterAlumnos from './router/alumnos.js'
 
 class Server {
     #port = null
     #app = null
+    #routerAuth = null
+    #routerAlumnos = null
 
     constructor(port) {
         // Garantizamos TZ del curso
         process.env.TZ = 'America/Argentina/Buenos_Aires'
         this.#port = port
         this.#app = express()
+        this.#routerAuth = new RouterAuth()
+        this.#routerAlumnos = new RouterAlumnos()
         this.#config()
     }
 
@@ -18,7 +23,8 @@ class Server {
         this.#app.use(express.urlencoded({ extended: true }))
         this.#app.use(express.static('public'))
 
-        this.#app.use('/api/alumnos', alumnosRouter)
+        this.#app.use('/api/auth', this.#routerAuth.config())
+        this.#app.use('/api/alumnos', this.#routerAlumnos.config())
 
         this.#app.get('/health', (req, res) => {
             res.json({
