@@ -22,9 +22,17 @@ function HomeEntrenador() {
           </div>
 
           <div className="card">
+            <h3>📅 Calendario</h3>
+            <p>Ver alumnos que entrenan cada día.</p>
+            <button onClick={() => navigate("/calendario/entrenador")}>
+              Ver calendario
+            </button>
+          </div>
+
+          <div className="card">
             <h3>📋 Crear plan</h3>
             <p>Diseñá un nuevo plan de entrenamiento personalizado.</p>
-            <button onClick={() => navigate("/entrenador")}>
+            <button onClick={() => navigate("/entrenador/plan")}>
             Crear Plan</button>
           </div>
 
@@ -33,14 +41,6 @@ function HomeEntrenador() {
             <p>Visualizá y editá las rutinas de entrenamiento disponibles.</p>
             <button onClick={() => navigate("/entrenador/rutinas")}>
             Ver rutinas</button>
-          </div>
-
-          <div className="card">
-            <h3>📅 Calendario</h3>
-            <p>Ver alumnos que entrenan cada día.</p>
-            <button onClick={() => navigate("/calendario/entrenador")}>
-              Ver calendario
-            </button>
           </div>
 
           <div className="card">

@@ -1,52 +1,28 @@
-// src/services/alumnosServices.js
+import api from "./api";
 
-// Mock de alumnos asociados a distintos entrenadores.
-// Más adelante podés reemplazar esto por un fetch a tu API.
-const MOCK_ALUMNOS = [
-  {
-    id: "a1",
-    nombre: "Ana Pérez",
-    email: "ana.perez@fitandtrack.com",
-    objetivo: "Bajar de peso",
-    estado: "activo",
-    entrenadorId: "coach-1",
-    entrenadorNombre: "Lucía Torres",
-    // si usás Vite, poné las imágenes en /public/images/...
-    avatarUrl: "/images/alumnos/ana.png",
-  },
-  {
-    id: "a2",
-    nombre: "Bruno Díaz",
-    email: "bruno.diaz@fitandtrack.com",
-    objetivo: "Hipertrofia",
-    estado: "pausado",
-    entrenadorId: "coach-1",
-    entrenadorNombre: "Lucía Torres",
-    avatarUrl: "/images/alumnos/bruno.png",
-  },
-  {
-    id: "a3",
-    nombre: "Carla Gómez",
-    email: "carla.gomez@fitandtrack.com",
-    objetivo: "Fuerza",
-    estado: "activo",
-    entrenadorId: "coach-2",
-    entrenadorNombre: "Martín Ríos",
-    avatarUrl: "/images/alumnos/carla.png",
-  },
-];
-
-// 🔹 Devuelve solo los alumnos del entrenador indicado
 export async function getAlumnosByEntrenador(entrenadorId) {
-  // simulamos una pequeña demora de red
-  await new Promise((r) => setTimeout(r, 150));
-
-  if (!entrenadorId) return [];
-  return MOCK_ALUMNOS.filter((a) => a.entrenadorId === entrenadorId);
+  const params = entrenadorId ? { entrenadorId } : {};
+  const response = await api.get("/alumnos", { params });
+  return response.data;
 }
 
-// 🔹 Devuelve todos los alumnos (útil para vistas de admin)
-export async function getAlumnosAll() {
-  await new Promise((r) => setTimeout(r, 150));
-  return [...MOCK_ALUMNOS];
+export async function getAlumnosAll({ includeUnassigned = false } = {}) {
+  const params = includeUnassigned ? { includeUnassigned: true } : {};
+  const response = await api.get("/alumnos", { params });
+  return response.data;
+}
+
+export async function asignarAlumnoAEntrenador(alumnoId) {
+  const response = await api.post(`/alumnos/${alumnoId}/asignar`);
+  return response.data;
+}
+
+export async function getAlumnosDisponibles() {
+  const response = await api.get("/alumnos/disponibles");
+  return response.data;
+}
+
+export async function desasignarAlumno(alumnoId) {
+  const response = await api.post(`/alumnos/${alumnoId}/desasignar`);
+  return response.data;
 }
