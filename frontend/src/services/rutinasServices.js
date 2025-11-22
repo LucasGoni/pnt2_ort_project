@@ -1,31 +1,22 @@
-// src/services/rutinasService.js
-
-const MOCK_RUTINAS = []; // Comienza vacío, el entrenador crea todo
+import api from "./api";
 
 export async function getRutinasByEntrenador(entrenadorId) {
-  await new Promise(r => setTimeout(r, 150)); // simulamos delay de red
-  return MOCK_RUTINAS.filter(r => r.entrenadorId === entrenadorId);
+  const params = entrenadorId ? { entrenadorId } : {};
+  const response = await api.get("/rutinas", { params });
+  return response.data;
 }
 
 export async function getRutinasAll() {
-  await new Promise(r => setTimeout(r, 150));
-  return MOCK_RUTINAS;
+  const response = await api.get("/rutinas");
+  return response.data;
 }
 
 export async function crearRutina(rutina) {
-  const nueva = {
-    id: `r-${Date.now()}`,
-    ...rutina,
-    ejercicios: rutina.ejercicios || []
-  };
-  MOCK_RUTINAS.push(nueva);
-  return nueva;
+  const response = await api.post("/rutinas", rutina);
+  return response.data;
 }
 
 export async function agregarEjercicioARutina(rutinaId, ejercicio) {
-  const rutina = MOCK_RUTINAS.find(r => r.id === rutinaId);
-  if (!rutina) return null;
-  rutina.ejercicios = rutina.ejercicios || [];
-  rutina.ejercicios.push(ejercicio);
-  return rutina;
+  const response = await api.post(`/rutinas/${rutinaId}/ejercicios`, ejercicio);
+  return response.data;
 }
