@@ -16,7 +16,7 @@ function HomeAlumno() {
           <div className="card">
             <h3>🏋️‍♀️ Mi rutina</h3>
             <p>Consultá tu plan de entrenamiento actual con detalles diarios.</p>
-            <button>Ver rutina</button>
+            <button onClick={() => navigate("/plan/alumno")}>Ver rutina</button>
           </div>
 
           <div className="card">

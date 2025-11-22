@@ -9,6 +9,7 @@ import EntrenadorAlumnos from "./pages/EntrenadorAlumnos/EntrenadorAlumnos.jsx";
 import CalendarAlumnoPage from "./pages/Calendar/CalendarAlumnoPage.jsx";
 import CalendarEntrenadorPage from "./pages/Calendar/CalendarEntrenadorPage.jsx";
 import EntrenadorRutinas from "./pages/EntrenadorRutinas/EntrenadorRutinas.jsx";
+import PlanAlumnoPage from "./pages/Plan/PlanAlumnoPage.jsx";
 
 function App() {
   return (
@@ -29,18 +30,21 @@ function App() {
         <Route
           path="/alumno"
           element={
-            <RoleRoute allowedRoles={["alumno"]}>
-              <HomeAlumno />
-            </RoleRoute>
+            <HomeAlumno />
           }
         />
 
         <Route
           path="/calendario/alumno"
           element={
-            <RoleRoute allowedRoles={["alumno"]}>
-              <CalendarAlumnoPage />
-            </RoleRoute>
+            <CalendarAlumnoPage />
+          }
+        />
+
+        <Route
+          path="/plan/alumno"
+          element={
+            <PlanAlumnoPage />
           }
         />
 
