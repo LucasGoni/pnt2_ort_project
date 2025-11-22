@@ -13,10 +13,19 @@ export default function EntrenadorEjercicios() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const data = await getEjercicios();
-      if (alive) {
-        setEjercicios(data);
-        setLoading(false);
+      try {
+        const data = await getEjercicios();
+        if (alive) {
+          setEjercicios(data);
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error("Error cargando ejercicios", error);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
       }
     })();
     return () => { alive = false; };
@@ -30,14 +39,20 @@ export default function EntrenadorEjercicios() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.nombre.trim()) return;
-    const nuevo = await crearEjercicio({
-      nombre: form.nombre.trim(),
-      descripcion: form.descripcion.trim(),
-      videoUrl: form.videoUrl.trim(),
-    });
-    setEjercicios((prev) => [nuevo, ...prev]);
-    setForm({ nombre: "", descripcion: "", videoUrl: "" });
-    setShowForm(false);
+    try {
+      const nuevo = await crearEjercicio({
+        nombre: form.nombre.trim(),
+        descripcion: form.descripcion.trim(),
+        videoUrl: form.videoUrl.trim(),
+      });
+      setEjercicios((prev) => [nuevo, ...prev]);
+      setForm({ nombre: "", descripcion: "", videoUrl: "" });
+      setShowForm(false);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("No se pudo crear el ejercicio", error);
+      }
+    }
   };
 
   return (

@@ -3,7 +3,7 @@ import "../../App.css";
 import "./EntrenadorRutinas.css";
 import { useAuth } from "../../context/AuthContext";
 import { agregarEjercicioARutina, crearRutina, getRutinasByEntrenador } from "../../services/rutinasServices.js";
-import { getEjercicios } from "../../services/ejerciciosService.js";
+import { crearEjercicio, getEjercicios } from "../../services/ejerciciosService.js";
 import BackButton from "../../components/BackButton.jsx";
 
 export default function EntrenadorRutinas() {
@@ -19,22 +19,45 @@ export default function EntrenadorRutinas() {
   const [pageSize, setPageSize] = useState(6);
   const [showCrearRutina, setShowCrearRutina] = useState(false);
   const [showNuevoEjercicio, setShowNuevoEjercicio] = useState(false);
+  const [error, setError] = useState(null);
 
 
   useEffect(() => {
     let alive = true;
 
     (async () => {
-      setLoading(true);
-      const [data, ejerciciosData] = await Promise.all([
-        getRutinasByEntrenador(user.id),
-        getEjercicios()
-      ]);
+      if (!user?.id) {
+        if (alive) {
+          setRows([]);
+          setEjercicios([]);
+          setLoading(false);
+        }
+        return;
+      }
 
-      if (alive) {
-        setRows(data);
-        setEjercicios(ejerciciosData);
-        setLoading(false);
+      setLoading(true);
+      setError(null);
+      try {
+        const [data, ejerciciosData] = await Promise.all([
+          getRutinasByEntrenador(user.id),
+          getEjercicios()
+        ]);
+
+        if (alive) {
+          setRows(data);
+          setEjercicios(ejerciciosData);
+        }
+      } catch (err) {
+        if (alive) {
+          setError("No se pudieron cargar las rutinas. Revisá que estés logueado como entrenador.");
+        }
+        if (import.meta.env.DEV) {
+          console.error("Error cargando rutinas o ejercicios", err);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
       }
     })();
 
@@ -86,7 +109,7 @@ export default function EntrenadorRutinas() {
     e.preventDefault();
     const form = formsEjercicio[rutinaId];
     if (!form?.ejercicioId || !form?.repeticiones) return;
-    const ejercicioBase = ejercicios.find(ej => ej.id === form.ejercicioId);
+    const ejercicioBase = ejercicios.find(ej => `${ej.id}` === `${form.ejercicioId}`);
     if (!ejercicioBase) return;
 
     const payload = {
@@ -95,43 +118,68 @@ export default function EntrenadorRutinas() {
       peso: form.peso
     };
 
-    const updated = await agregarEjercicioARutina(rutinaId, payload);
-    if (updated) {
-      setRows(prev => prev.map(r => r.id === updated.id ? { ...updated } : r));
-      setFormsEjercicio(prev => ({ ...prev, [rutinaId]: { ejercicioId: "", repeticiones: "", peso: "" } }));
+    try {
+      const updated = await agregarEjercicioARutina(rutinaId, payload);
+      if (updated) {
+        setRows(prev => prev.map(r => r.id === updated.id ? { ...updated } : r));
+        setFormsEjercicio(prev => ({ ...prev, [rutinaId]: { ejercicioId: "", repeticiones: "", peso: "" } }));
+      }
+    } catch (err) {
+      setError("No se pudo agregar el ejercicio a la rutina.");
+      if (import.meta.env.DEV) {
+        console.error("Error agregando ejercicio a rutina", err);
+      }
     }
   };
 
   const handleCrearRutina = async (e) => {
     e.preventDefault();
+    if (!user?.id) {
+      setError("Necesitás iniciar sesión como entrenador para crear rutinas.");
+      return;
+    }
     if (!rutinaNueva.titulo.trim()) return;
-    const creada = await crearRutina({
-      ...rutinaNueva,
-      titulo: rutinaNueva.titulo.trim(),
-      objetivo: rutinaNueva.objetivo.trim(),
-      entrenadorId: user.id
-    });
-    setRows(prev => [creada, ...prev]);
-    setRutinaNueva({ titulo: "", nivel: "Inicial", duracionMin: 30, objetivo: "", estado: "activa" });
+    try {
+      const creada = await crearRutina({
+        ...rutinaNueva,
+        titulo: rutinaNueva.titulo.trim(),
+        objetivo: rutinaNueva.objetivo.trim(),
+        entrenadorId: user.id
+      });
+      setRows(prev => [creada, ...prev]);
+      setRutinaNueva({ titulo: "", nivel: "Inicial", duracionMin: 30, objetivo: "", estado: "activa" });
+      setShowCrearRutina(false);
+      setError(null);
+    } catch (err) {
+      setError("No se pudo crear la rutina. Verificá tu sesión o intentá de nuevo.");
+      if (import.meta.env.DEV) {
+        console.error("Error creando rutina", err);
+      }
+    }
   };
 
-  const handleCrearEjercicio = (e) => {
+  const handleCrearEjercicio = async (e) => {
     e.preventDefault();
     if (!ejercicioNuevo.nombre.trim()) return;
-    const nuevo = {
-      id: `ej-${Date.now()}`,
-      nombre: ejercicioNuevo.nombre.trim(),
-      descripcion: ejercicioNuevo.descripcion.trim(),
-      videoUrl: ""
-    };
-    setEjercicios(prev => [nuevo, ...prev]);
-    setEjercicioNuevo({ nombre: "", descripcion: "" });
-    // preseleccionamos el nuevo ejercicio en el formulario abierto
-    if (expandedId) {
-      setFormsEjercicio(prev => ({
-        ...prev,
-        [expandedId]: { ...(prev[expandedId] || {}), ejercicioId: nuevo.id }
-      }));
+    try {
+      const nuevo = await crearEjercicio({
+        nombre: ejercicioNuevo.nombre.trim(),
+        descripcion: ejercicioNuevo.descripcion.trim(),
+        videoUrl: ""
+      });
+      setEjercicios(prev => [nuevo, ...prev]);
+      setEjercicioNuevo({ nombre: "", descripcion: "" });
+      // preseleccionamos el nuevo ejercicio en el formulario abierto
+      if (expandedId) {
+        setFormsEjercicio(prev => ({
+          ...prev,
+          [expandedId]: { ...(prev[expandedId] || {}), ejercicioId: String(nuevo.id) }
+        }));
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("No se pudo crear el ejercicio", error);
+      }
     }
   };
 
@@ -147,6 +195,7 @@ export default function EntrenadorRutinas() {
         <p className="subtitle">
           Administrá las rutinas asignadas a tus alumnos.
         </p>
+        {error && <p style={{ color: "#b00020", marginBottom: "0.5rem" }}>{error}</p>}
 
         <div className="rutinas-toolbar">
           <input
