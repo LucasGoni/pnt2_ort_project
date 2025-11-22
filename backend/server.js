@@ -1,5 +1,5 @@
 import express from 'express'
-
+import cors from 'cors'
 import RouterAuth from './router/auth.js'
 
 class Server {
@@ -15,6 +15,7 @@ class Server {
     }
 
     #config() {
+        this.#app.use(cors())
         this.#app.use(express.json())
         this.#app.use(express.urlencoded({ extended: true }))
         this.#app.use(express.static('public'))
