@@ -21,4 +21,7 @@ try {
 }
 catch (error) {
     console.log(`Error en conexión de base de datos: ${error.message}`)
+    if (error?.stack) {
+        console.error(error.stack)
+    }
 }

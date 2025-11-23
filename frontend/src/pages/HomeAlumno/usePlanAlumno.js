@@ -79,8 +79,9 @@ export default function usePlanAlumno(alumnoId) {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await api.get(`/api/alumnos/${alumnoId}/plan`);
-      setPlan(data.plan);
+      const { data } = await api.get(`/alumnos/${alumnoId}/plan`);
+      // backend puede responder { plan: {...} } o el plan directo
+      setPlan(data.plan ?? data);
     } catch (err) {
       setError(err.response?.data?.message || "No pudimos traer tu plan.");
     } finally {
@@ -99,7 +100,7 @@ export default function usePlanAlumno(alumnoId) {
   const saveAsignacion = useCallback(
     async (draftAsignacion) => {
       try {
-        const { data } = await api.put(`/api/alumnos/${alumnoId}/plan/asignacion`, {
+        const { data } = await api.put(`/alumnos/${alumnoId}/plan/asignacion`, {
           asignacion: draftAsignacion,
         });
         setPlan(data.plan);
@@ -117,7 +118,7 @@ export default function usePlanAlumno(alumnoId) {
   const toggleSesion = useCallback(
     async (fecha, rutinaId, done) => {
       try {
-        const { data } = await api.patch(`/api/alumnos/${alumnoId}/plan/sesiones/${fecha}`, {
+        const { data } = await api.patch(`/alumnos/${alumnoId}/plan/sesiones/${fecha}`, {
           rutinaId,
           done,
         });

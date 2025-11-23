@@ -1,9 +1,12 @@
 import React from "react";
 import "./HomeAlumno.css";
 import { useNavigate } from "react-router-dom";
+import MiRutina from "./MiRutina";
+import { useAuth } from "../../context/AuthContext";
 
 function HomeAlumno() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="home-container">
@@ -36,6 +39,20 @@ function HomeAlumno() {
             <p>Leé los comentarios y recomendaciones de tu entrenador.</p>
             <button>Ver mensajes</button>
           </div>
+        </div>
+
+        <div className="mi-rutina-section">
+          <div className="plan-section-header">
+            <div>
+              <h3>Mi rutina</h3>
+              <p>Rutinas asignadas a tu plan vigente.</p>
+            </div>
+            <div className="plan-alumno">
+              <p className="plan-etiqueta">Alumno</p>
+              <strong>{user?.nombre || user?.email || "Vos"}</strong>
+            </div>
+          </div>
+          <MiRutina />
         </div>
       </main>
 

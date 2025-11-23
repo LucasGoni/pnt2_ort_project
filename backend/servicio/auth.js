@@ -1,13 +1,16 @@
 import crypto from 'crypto'
 import UsuariosRepo from '../modelo/usuariosRepo.js'
+import AlumnosRepo from '../modelo/alumnosRepo.js'
 import { registroSchema, loginSchema } from './validaciones/auth.js'
 import { crearToken, validarToken } from './tokenService.js'
 
 class AuthServicio {
     #usuariosRepo = null
+    #alumnosRepo = null
 
     constructor() {
         this.#usuariosRepo = new UsuariosRepo()
+        this.#alumnosRepo = new AlumnosRepo()
     }
 
     #hashPassword = password => {
@@ -43,8 +46,17 @@ class AuthServicio {
         })
 
         const usuario = this.#limpiarUsuario(usuarioCreado)
-        const token = crearToken(usuario)
-        return { user: usuario, token }
+        let alumnoId = null
+        if (usuario.rol === 'alumno') {
+            // Aseguramos la fila en alumnos y devolvemos alumnoId
+            await this.#alumnosRepo.seedDesdeUsuarios([usuario])
+            const alumnoRow = await this.#alumnosRepo.buscarPorEmail(usuario.email)
+            alumnoId = alumnoRow?.id ?? null
+        }
+
+        const usuarioResponse = { ...usuario, alumnoId }
+        const token = crearToken(usuarioResponse)
+        return { user: usuarioResponse, token }
     }
 
     login = async (email, password) => {
@@ -65,8 +77,16 @@ class AuthServicio {
         }
 
         const usuarioLimpio = this.#limpiarUsuario(usuario)
-        const token = crearToken(usuarioLimpio)
-        return { user: usuarioLimpio, token }
+        let alumnoId = null
+        if (usuarioLimpio.rol === 'alumno') {
+            await this.#alumnosRepo.seedDesdeUsuarios([usuarioLimpio])
+            const alumnoRow = await this.#alumnosRepo.buscarPorEmail(usuarioLimpio.email)
+            alumnoId = alumnoRow?.id ?? null
+        }
+
+        const usuarioResponse = { ...usuarioLimpio, alumnoId }
+        const token = crearToken(usuarioResponse)
+        return { user: usuarioResponse, token }
     }
 
     obtenerPerfil = async token => {

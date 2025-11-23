@@ -1,3 +1,4 @@
+import { Op } from 'sequelize'
 import AlumnosModel from './alumnosModel.js'
 
 class AlumnosRepo {
@@ -45,23 +46,24 @@ class AlumnosRepo {
     seedDesdeUsuarios = async usuarios => {
         await this.#ensureReady()
         if (!Array.isArray(usuarios) || !usuarios.length) return
-        const emails = usuarios.map(u => u.email)
-        const existentes = await this.#alumnosModel.findAll({ where: { email: emails } })
-        const existentesMap = new Set(existentes.map(e => e.email))
+        const emails = usuarios.map(u => u.email.toLowerCase())
+        const existentes = await this.#alumnosModel.findAll({ where: { email: { [Op.in]: emails } } })
+        const existentesMap = new Set(existentes.map(e => e.email.toLowerCase()))
 
         const nuevos = usuarios
             .filter(u => !existentesMap.has(u.email))
             .map(u => ({
                 nombre: u.nombre,
-                email: u.email,
+                email: u.email.toLowerCase(),
                 objetivo: '',
                 estado: 'activo',
                 entrenadorId: null,
-                avatarUrl: null
+                avatarUrl: null,
+                planId: null
             }))
 
         if (nuevos.length) {
-            await this.#alumnosModel.bulkCreate(nuevos)
+            await this.#alumnosModel.bulkCreate(nuevos, { ignoreDuplicates: true })
         }
     }
 
@@ -73,6 +75,37 @@ class AlumnosRepo {
         )
         const updated = await this.#alumnosModel.findByPk(alumnoId)
         return updated ? updated.get({ plain: true }) : null
+    }
+
+    /**
+     * Persiste la relación Alumno -> Plan (planId en la tabla alumnos).
+     */
+    asignarPlan = async (alumnoId, planId) => {
+        await this.#ensureReady()
+        await this.#alumnosModel.update(
+            { planId },
+            { where: { id: alumnoId } }
+        )
+        const updated = await this.#alumnosModel.findByPk(alumnoId)
+        return updated ? updated.get({ plain: true }) : null
+    }
+
+    /**
+     * Busca un alumno por email (útil para mapear usuario -> alumno).
+     */
+    buscarPorEmail = async (email) => {
+        await this.#ensureReady()
+        const alumno = await this.#alumnosModel.findOne({ where: { email } })
+        return alumno ? alumno.get({ plain: true }) : null
+    }
+
+    /**
+     * Obtiene un alumno por id (plain).
+     */
+    obtenerPorId = async (alumnoId) => {
+        await this.#ensureReady()
+        const alumno = await this.#alumnosModel.findByPk(alumnoId)
+        return alumno ? alumno.get({ plain: true }) : null
     }
 }
 

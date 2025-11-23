@@ -29,7 +29,8 @@ const formatFechaCorta = (date) =>
 
 export default function PlanCalendario() {
   const { user } = useAuth();
-  const alumnoId = user?.id || user?.alumnoId || "42"; // fallback al seed
+  const searchId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("alumnoId") : null;
+  const alumnoId = searchId || user?.alumnoId || user?.id || user?.userId || null; // preferimos alumnoId
 
   const { plan, events, isLoading, error, saveAsignacion, toggleSesion } = usePlanAlumno(alumnoId);
   const [draftAsignacion, setDraftAsignacion] = useState([]);

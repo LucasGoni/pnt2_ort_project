@@ -39,6 +39,11 @@ class RutinasModel {
                     allowNull: false,
                     defaultValue: 'activa'
                 },
+                idPlan: {
+                    // vínculo explícito a plan; opcional para rutinas libres
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                },
                 entrenadorId: {
                     type: DataTypes.INTEGER,
                     allowNull: false
@@ -61,6 +66,16 @@ class RutinasModel {
 
     static sync = async () => {
         const model = RutinasModel.init()
+        // Agregamos idPlan si no existe, evitando el backup con duplicados que hace alter:true
+        const qi = CnxSQLite.sequelize.getQueryInterface()
+        try {
+            const desc = await qi.describeTable('rutinas')
+            if (!desc.idPlan) {
+                await qi.addColumn('rutinas', 'idPlan', { type: DataTypes.INTEGER, allowNull: true })
+            }
+        } catch (e) {
+            // Si la tabla no existe aún, sync la crea más abajo
+        }
         await model.sync()
         return model
     }

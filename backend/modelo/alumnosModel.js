@@ -44,6 +44,10 @@ class AlumnosModel {
                 avatarUrl: {
                     type: DataTypes.STRING,
                     allowNull: true
+                },
+                planId: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
                 }
             }, {
                 sequelize: CnxSQLite.sequelize,
@@ -58,6 +62,16 @@ class AlumnosModel {
 
     static sync = async () => {
         const model = AlumnosModel.init()
+        // Agregamos planId si falta sin recrear la tabla (evita errores de alter en SQLite)
+        const qi = CnxSQLite.sequelize.getQueryInterface()
+        try {
+            const desc = await qi.describeTable('alumnos')
+            if (!desc.planId) {
+                await qi.addColumn('alumnos', 'planId', { type: DataTypes.INTEGER, allowNull: true })
+            }
+        } catch (_e) {
+            // Si la tabla no existe aún, sync la creará abajo
+        }
         await model.sync()
         return model
     }

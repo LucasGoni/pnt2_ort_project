@@ -3,6 +3,7 @@ import RouterAuth from './router/auth.js'
 import RouterAlumnos from './router/alumnos.js'
 import RouterEjercicios from './router/ejercicios.js'
 import RouterRutinas from './router/rutinas.js'
+import RouterPlanes from './router/planes.js'
 
 class Server {
     #port = null
@@ -11,6 +12,7 @@ class Server {
     #routerAlumnos = null
     #routerEjercicios = null
     #routerRutinas = null
+    #routerPlanes = null
 
     constructor(port) {
         // Garantizamos TZ del curso
@@ -21,6 +23,7 @@ class Server {
         this.#routerAlumnos = new RouterAlumnos()
         this.#routerEjercicios = new RouterEjercicios()
         this.#routerRutinas = new RouterRutinas()
+        this.#routerPlanes = new RouterPlanes()
         this.#config()
     }
 
@@ -33,6 +36,7 @@ class Server {
         this.#app.use('/api/alumnos', this.#routerAlumnos.config())
         this.#app.use('/api/ejercicios', this.#routerEjercicios.config())
         this.#app.use('/api/rutinas', this.#routerRutinas.config())
+        this.#app.use('/api/planes', this.#routerPlanes.config())
 
         this.#app.get('/health', (req, res) => {
             res.json({
