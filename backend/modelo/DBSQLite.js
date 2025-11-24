@@ -19,10 +19,22 @@ class CnxSQLite {
         CnxSQLite.sequelize = new Sequelize({
             dialect: 'sqlite',
             storage: dbPath,
-            logging: false
+            logging: false,
+            dialectOptions: {
+                // aumenta tolerancia a locks de SQLite
+                busyTimeout: 3000,
+            },
+            pool: {
+                max: 5,
+                min: 0,
+                idle: 10000,
+            }
         })
 
         await CnxSQLite.sequelize.authenticate()
+        // Minimiza locking entre lectores/escritores
+        await CnxSQLite.sequelize.query('PRAGMA journal_mode = WAL;')
+        await CnxSQLite.sequelize.query('PRAGMA busy_timeout = 3000;')
         CnxSQLite.connectionOK = true
     }
 

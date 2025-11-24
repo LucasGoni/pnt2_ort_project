@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAlumnosAll } from "../../services/alumnosServices.js";
+import { getAlumnosAll, asignarPlanAAlumno } from "../../services/alumnosServices.js";
 import { getRutinasAll } from "../../services/rutinasServices.js";
 import "../../App.css";
 import "./CrearPlan.css";
@@ -8,35 +8,69 @@ import BackButton from "../../components/BackButton.jsx";
 export default function CrearPlan() {
   const [alumnos, setAlumnos] = useState([]);
   const [rutinas, setRutinas] = useState([]);
-  const [form, setForm] = useState({ alumnoId: "", rutinaId: "", inicio: "", fin: "" });
+  const [form, setForm] = useState({ alumnoId: "", rutinasIds: [], inicio: "", fin: "", nombre: "" });
   const [mensaje, setMensaje] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [a, r] = await Promise.all([getAlumnosAll(), getRutinasAll()]);
-      if (alive) {
-        setAlumnos(a);
-        setRutinas(r);
+      try {
+        const [a, r] = await Promise.all([getAlumnosAll({ includeUnassigned: true }), getRutinasAll()]);
+        if (alive) {
+          setAlumnos(a);
+          setRutinas(r);
+        }
+      } catch (err) {
+        if (alive) setError(err?.response?.data?.message || "No pudimos cargar alumnos/rutinas");
       }
     })();
     return () => { alive = false; };
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    const { name, value, checked } = e.target;
+    if (name === "rutinasIds") {
+      const valNum = Number(value);
+      setForm((prev) => {
+        const current = new Set(prev.rutinasIds);
+        if (checked) current.add(valNum);
+        else current.delete(valNum);
+        return { ...prev, rutinasIds: Array.from(current) };
+      });
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
     setMensaje("");
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.alumnoId || !form.rutinaId || !form.inicio || !form.fin) return;
-    const alumno = alumnos.find(a => a.id === form.alumnoId);
-    const rutina = rutinas.find(r => r.id === form.rutinaId);
-    setMensaje(`Plan asignado: ${rutina?.titulo} para ${alumno?.nombre} del ${form.inicio} al ${form.fin}.`);
-    setShowForm(false);
+    setError("");
+    setMensaje("");
+    if (!form.alumnoId || !form.rutinasIds.length || !form.inicio || !form.fin) return;
+    const alumnoIdNum = Number(form.alumnoId);
+    const alumno = alumnos.find(a => Number(a.id) === alumnoIdNum);
+    const rutinasSeleccionadas = rutinas.filter(r => form.rutinasIds.includes(Number(r.id)));
+
+    setLoading(true);
+    try {
+      await asignarPlanAAlumno(alumnoIdNum, {
+        nombre: form.nombre || "Plan personalizado",
+        objetivo: rutinasSeleccionadas[0]?.objetivo || "Pendiente",
+        rutinas: form.rutinasIds,
+        vigencia: { desde: form.inicio, hasta: form.fin },
+      });
+      setMensaje(`Plan asignado a ${alumno?.nombre} con ${form.rutinasIds.length} rutina(s) del ${form.inicio} al ${form.fin}.`);
+      setShowForm(false);
+    } catch (err) {
+      setError(err?.response?.data?.message || "No pudimos asignar el plan");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -87,12 +121,33 @@ export default function CrearPlan() {
                     </select>
                   </label>
 
+                  <fieldset className="rutinas-fieldset">
+                    <legend>Rutinas (seleccioná una o varias)</legend>
+                    <div className="rutinas-grid">
+                      {rutinas.map((r) => (
+                        <label key={r.id} className="rutina-checkbox">
+                          <input
+                            type="checkbox"
+                            name="rutinasIds"
+                            value={r.id}
+                            checked={form.rutinasIds.includes(Number(r.id))}
+                            onChange={handleChange}
+                          />
+                          {r.titulo} ({r.nivel})
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
                   <label>
-                    Rutina
-                    <select name="rutinaId" value={form.rutinaId} onChange={handleChange} required>
-                      <option value="">Elegí rutina</option>
-                      {rutinas.map(r => <option key={r.id} value={r.id}>{r.titulo}</option>)}
-                    </select>
+                    Nombre del plan
+                    <input
+                      type="text"
+                      name="nombre"
+                      value={form.nombre}
+                      onChange={handleChange}
+                      placeholder="Plan personalizado"
+                    />
                   </label>
 
                   <label>
@@ -106,7 +161,7 @@ export default function CrearPlan() {
                   </label>
 
                   <div className="form-actions">
-                    <button type="submit" className="primary-btn">Asignar plan</button>
+                    <button type="submit" className="primary-btn" disabled={loading}>{loading ? "Asignando..." : "Asignar plan"}</button>
                     <button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Cancelar</button>
                   </div>
                 </form>
@@ -117,6 +172,11 @@ export default function CrearPlan() {
           {mensaje && (
             <div className="plan-alert">
               {mensaje}
+            </div>
+          )}
+          {error && (
+            <div className="plan-alert error">
+              {error}
             </div>
           )}
         </div>

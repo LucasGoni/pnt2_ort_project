@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import AlumnosModel from "./alumnosModel.js";
 
 class AlumnosRepo {
@@ -35,6 +36,62 @@ class AlumnosRepo {
     return rows.map((r) => r.get({ plain: true }));
   };
 
+  asignarEntrenador = async (alumnoId, entrenadorId) => {
+    await this.#ensureReady();
+    await this.#alumnosModel.update(
+      { entrenadorId },
+      { where: { id: alumnoId } }
+    );
+    const updated = await this.#alumnosModel.findByPk(alumnoId);
+    return updated ? updated.get({ plain: true }) : null;
+  };
+
+  desasignarEntrenador = async (alumnoId) => {
+    await this.#ensureReady();
+    await this.#alumnosModel.update(
+      { entrenadorId: null },
+      { where: { id: alumnoId } }
+    );
+    const updated = await this.#alumnosModel.findByPk(alumnoId);
+    return updated ? updated.get({ plain: true }) : null;
+  };
+
+  asignarPlan = async (alumnoId, planId) => {
+    await this.#ensureReady();
+    await this.#alumnosModel.update({ planId }, { where: { id: alumnoId } });
+    const updated = await this.#alumnosModel.findByPk(alumnoId);
+    return updated ? updated.get({ plain: true }) : null;
+  };
+
+  seedDesdeUsuarios = async (usuarios) => {
+    await this.#ensureReady();
+    if (!Array.isArray(usuarios) || !usuarios.length) return;
+
+    const emails = usuarios.map((u) => u.email.toLowerCase());
+    const existentes = await this.#alumnosModel.findAll({
+      where: { email: { [Op.in]: emails } },
+    });
+    const existentesMap = new Set(existentes.map((e) => e.email.toLowerCase()));
+
+    const nuevos = usuarios
+      .filter((u) => !existentesMap.has(u.email.toLowerCase()))
+      .map((u) => ({
+        nombre: u.nombre,
+        email: u.email.toLowerCase(),
+        objetivo: "",
+        estado: "activo",
+        entrenadorId: null,
+        avatarUrl: null,
+        planId: null,
+        peso: null,
+        altura: null,
+      }));
+
+    if (nuevos.length) {
+      await this.#alumnosModel.bulkCreate(nuevos, { ignoreDuplicates: true });
+    }
+  };
+
   buscarPorEmail = async (email) => {
     await this.#ensureReady();
     const alumno = await this.#alumnosModel.findOne({ where: { email } });
@@ -48,51 +105,10 @@ class AlumnosRepo {
     return updated ? updated.get({ plain: true }) : null;
   };
 
-  asignarEntrenador = async (alumnoId, entrenadorId) => {
+  obtenerPorId = async (alumnoId) => {
     await this.#ensureReady();
-    await this.#alumnosModel.update(
-      { entrenadorId },
-      { where: { id: alumnoId } }
-    );
-    const updated = await this.#alumnosModel.findByPk(alumnoId);
-    return updated ? updated.get({ plain: true }) : null;
-  };
-
-  seedDesdeUsuarios = async (usuarios) => {
-    await this.#ensureReady();
-    if (!Array.isArray(usuarios) || !usuarios.length) return;
-    const emails = usuarios.map((u) => u.email);
-    const existentes = await this.#alumnosModel.findAll({
-      where: { email: emails },
-    });
-    const existentesMap = new Set(existentes.map((e) => e.email));
-
-    const nuevos = usuarios
-      .filter((u) => !existentesMap.has(u.email))
-      .map((u) => ({
-        nombre: u.nombre,
-        email: u.email,
-        objetivo: "",
-        estado: "activo",
-        entrenadorId: null,
-        avatarUrl: null,
-        peso: null,
-        altura: null
-      }));
-
-    if (nuevos.length) {
-      await this.#alumnosModel.bulkCreate(nuevos);
-    }
-  };
-
-  desasignarEntrenador = async (alumnoId) => {
-    await this.#ensureReady();
-    await this.#alumnosModel.update(
-      { entrenadorId: null },
-      { where: { id: alumnoId } }
-    );
-    const updated = await this.#alumnosModel.findByPk(alumnoId);
-    return updated ? updated.get({ plain: true }) : null;
+    const alumno = await this.#alumnosModel.findByPk(alumnoId);
+    return alumno ? alumno.get({ plain: true }) : null;
   };
 }
 
