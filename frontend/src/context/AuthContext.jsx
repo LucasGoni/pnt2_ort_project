@@ -58,7 +58,13 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await authService.logout();
+    try {
+      await authService.logout();
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error al cerrar sesión:", error);
+      }
+    }
     await storage.removeItem("auth");
     setAuth(null);
   };

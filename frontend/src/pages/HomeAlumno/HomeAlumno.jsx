@@ -1,6 +1,7 @@
 import React from "react";
-import "./HomeAlumno.css";
 import { useNavigate } from "react-router-dom";
+import LogoutButton from "../../components/LogoutButton";
+import "./HomeAlumno.css";
 
 function HomeAlumno() {
   const navigate = useNavigate();
@@ -14,15 +15,26 @@ function HomeAlumno() {
 
         <div className="card-grid">
           <div className="card">
+            <h3>Mi perfil</h3>
+            <p>Actualizá tu nombre, peso, altura y avatar.</p>
+            <button onClick={() => navigate("/alumno/perfil")}>
+              Editar perfil
+            </button>
+          </div>
+          <div className="card">
             <h3>🏋️‍♀️ Mi rutina</h3>
-            <p>Consultá tu plan de entrenamiento actual con detalles diarios.</p>
+            <p>
+              Consultá tu plan de entrenamiento actual con detalles diarios.
+            </p>
             <button>Ver rutina</button>
           </div>
 
           <div className="card">
             <h3>📅 Calendario</h3>
             <p>Revisá tus días de entrenamiento y próximos objetivos.</p>
-            <button onClick={() => navigate("/calendario/alumno")}>Ver calendario</button>
+            <button onClick={() => navigate("/calendario/alumno")}>
+              Ver calendario
+            </button>
           </div>
 
           <div className="card">
@@ -40,7 +52,7 @@ function HomeAlumno() {
       </main>
 
       <footer className="footer">
-        <button className="logout-btn">Cerrar sesión</button>
+        <LogoutButton />
       </footer>
     </div>
   );

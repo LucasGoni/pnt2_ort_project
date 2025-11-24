@@ -11,6 +11,9 @@ import CalendarEntrenadorPage from "./pages/Calendar/CalendarEntrenadorPage.jsx"
 import EntrenadorRutinas from "./pages/EntrenadorRutinas/EntrenadorRutinas.jsx";
 import EntrenadorEjercicios from "./pages/EntrenadorEjercicios/EntrenadorEjercicios.jsx";
 import CrearPlan from "./pages/PlanEntrenador/CrearPlan.jsx";
+import PerfilEntrenador from "./pages/PerfilEntrenador/PerfilEntrenador.jsx";
+import PerfilAlumno from "./pages/PerfilAlumno/PerfilAlumno.jsx";
+
 
 function App() {
   return (
@@ -58,6 +61,8 @@ function App() {
         <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} />
         <Route path="/entrenador/rutinas" element={<EntrenadorRutinas />} />
         <Route path="/entrenador/ejercicios" element={<EntrenadorEjercicios />} />
+        <Route path="/entrenador/perfil" element={<PerfilEntrenador />} />
+        <Route path="/alumno/perfil" element={<PerfilAlumno />} />
 
         <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
       </Routes>

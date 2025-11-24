@@ -52,6 +52,17 @@ class AuthControlador {
             this.#manejarError(res, error, 'Token inválido')
         }
     }
+        actualizarPerfil = async (req, res) => {
+        try {
+            const token = this.#extraerToken(req)
+            const usuario = await this.#servicio.actualizarPerfil(token, req.body)
+            res.json({ user: usuario })
+        }
+        catch (error) {
+            this.#manejarError(res, error, 'No se pudo actualizar el perfil')
+        }
+    }
+
 
     refresh = async (req, res) => {
         try {
