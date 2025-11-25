@@ -18,6 +18,11 @@ export function AuthProvider({ children }) {
   const [auth, setAuth] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const persistAuth = async (nextAuth) => {
+    setAuth(nextAuth);
+    await storage.setItem("auth", JSON.stringify(nextAuth));
+  };
+
   useEffect(() => {
     const loadAuth = async () => {
       try {
@@ -44,17 +49,22 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const data = await authService.login(email, password);
     const authData = { token: data.token, user: data.user };
-    await storage.setItem("auth", JSON.stringify(authData));
-    setAuth(authData);
+    await persistAuth(authData);
     return data;
   };
 
   const register = async (userData) => {
     const data = await authService.register(userData);
     const authData = { token: data.token, user: data.user };
-    await storage.setItem("auth", JSON.stringify(authData));
-    setAuth(authData);
+    await persistAuth(authData);
     return data;
+  };
+
+  const updateUser = async (partialUser) => {
+    if (!auth) return;
+    const merged = { ...auth.user, ...partialUser };
+    const nextAuth = { ...auth, user: merged };
+    await persistAuth(nextAuth);
   };
 
   const logout = async () => {
@@ -79,6 +89,7 @@ export function AuthProvider({ children }) {
         register,
         logout,
         isAuthenticated: !!auth,
+        updateUser,
       }}
     >
       {children}

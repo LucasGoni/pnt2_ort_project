@@ -68,7 +68,7 @@ export default function CrearPlan() {
         return { ...prev, rutinasIds: Array.from(current) };
       });
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
     setMensaje("");
     setError("");
@@ -150,7 +150,7 @@ export default function CrearPlan() {
             <button
               type="button"
               className={`add-plan-btn ${showForm ? "is-open" : ""}`}
-              onClick={() => setShowForm(prev => !prev)}
+              onClick={() => setShowForm((prev) => !prev)}
             >
               <div className="add-rutina-content">
                 <span className="rutina-row-title">{showForm ? "Cerrar formulario" : "Crear plan"}</span>
@@ -165,7 +165,7 @@ export default function CrearPlan() {
                 <h3 className="form-card-title">Nuevo plan</h3>
                 <form className="google-form" onSubmit={handleSubmit}>
                   <fieldset className="rutinas-fieldset">
-                    <legend>Rutinas (seleccioná una o varias)</legend>
+                    <legend>Rutinas (seleccion&aacute; una o varias)</legend>
                     <div className="rutinas-grid">
                       {rutinas.map((r) => (
                         <label key={r.id} className="rutina-checkbox">

@@ -5,7 +5,7 @@ import authService from "../../services/authService";
 import BackButton from "../../components/BackButton.jsx";
 
 export default function PerfilAlumno() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -52,6 +52,13 @@ export default function PerfilAlumno() {
         nombre,
         apellido,
         // mandamos como números si hay valor, si no null
+        peso: peso !== "" ? Number(peso) : null,
+        altura: altura !== "" ? Number(altura) : null,
+        avatarUrl: avatarUrl || null,
+      });
+      await updateUser({
+        nombre,
+        apellido,
         peso: peso !== "" ? Number(peso) : null,
         altura: altura !== "" ? Number(altura) : null,
         avatarUrl: avatarUrl || null,

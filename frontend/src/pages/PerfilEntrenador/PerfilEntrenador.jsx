@@ -5,7 +5,7 @@ import authService from "../../services/authService";
 import BackButton from "../../components/BackButton.jsx";
 
 export default function PerfilEntrenador() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [saving, setSaving] = useState(false);
@@ -43,7 +43,8 @@ export default function PerfilEntrenador() {
         nombre,
         apellido,
       });
-      setMessage("Perfil actualizado correctamente ✅");
+      await updateUser({ nombre, apellido });
+      setMessage("Perfil actualizado correctamente 💪.");
     } catch (err) {
       console.error(err);
       setMessage("No se pudo actualizar el perfil 😢");

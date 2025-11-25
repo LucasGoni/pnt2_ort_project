@@ -12,7 +12,9 @@ function HomeAlumno() {
   return (
     <div className="home-container">
       <main className="home-main">
-        <h2 className="welcome">Hola, Alumno!</h2>
+        <h2 className="welcome">
+          ¡Bienvenido, {user?.nombre || user?.email || "Alumno"}!
+        </h2>
         <p className="subtitle">Estas listo para entrenar?</p>
         <p className="subtitle">Revisa tu entrenamiento y progreso:</p>
 
