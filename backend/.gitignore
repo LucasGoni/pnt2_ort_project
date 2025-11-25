@@ -13,3 +13,8 @@ npm-debug.log*
 
 # OS files
 .DS_Store
+
+# Database files
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
