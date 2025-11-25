@@ -13,6 +13,12 @@
   margin-bottom: 20px;
 }
 
+.calendar-error {
+  color: #b00020;
+  text-align: center;
+  margin: 0 0 12px;
+}
+
 /* Refuerzo: que NADA los estire en esta página */
 .calendar-page .rbc-toolbar button {
   width: auto !important;

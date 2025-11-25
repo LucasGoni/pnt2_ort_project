@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getAlumnosAll } from "../../services/alumnosServices.js";
 import { getRutinasByEntrenador } from "../../services/rutinasServices.js";
@@ -111,6 +111,10 @@ export default function CrearPlan() {
       setError(err?.response?.data?.message || "No pudimos refrescar los datos");
     }
   };
+
+  const alumnosAsignables = useMemo(() => {
+    return (alumnos || []).filter((a) => !a.entrenadorId || a.entrenadorId === user?.id);
+  }, [alumnos, user?.id]);
 
   const handleEliminarPlan = async (planId, nombre) => {
     const confirmar = window.confirm(`¿Eliminar el plan "${nombre}"? Se desasignará de alumnos y rutinas.`);
@@ -278,7 +282,7 @@ export default function CrearPlan() {
                               }))}
                             >
                               <option value="">Elegí alumno</option>
-                              {alumnos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                              {alumnosAsignables.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                             </select>
                           </label>
                           <label>

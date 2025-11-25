@@ -275,6 +275,11 @@ export const agregarAsignacionPlan = async (req, res) => {
       err.status = 404;
       throw err;
     }
+    if (alumno.entrenadorId && alumno.entrenadorId !== payload.id) {
+      const err = new Error("No podés asignar planes a un alumno de otro entrenador");
+      err.status = 403;
+      throw err;
+    }
     // actualizamos planId del alumno para reflejar asignación
     await getAlumnosRepo().asignarPlan(alumnoId, planId);
 
