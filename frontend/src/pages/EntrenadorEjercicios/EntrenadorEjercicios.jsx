@@ -15,6 +15,7 @@ export default function EntrenadorEjercicios() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [error, setError] = useState("");
+  const [previewMedia, setPreviewMedia] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -125,21 +126,40 @@ export default function EntrenadorEjercicios() {
     if (url.startsWith("http")) return url;
     const base = import.meta.env.VITE_API_BASE_URL;
     if (base && base.startsWith("http")) {
-      const clean = base.endsWith("/api") ? base.replace(/\/api$/, "") : base.replace(/\/$/, "");
-      return `${clean}${url.startsWith("/") ? "" : "/"}${url}`;
+      const cleanBase = base.replace(/\/api\/?$/i, "").replace(/\/+$/, "");
+      return `${cleanBase}${url.startsWith("/") ? "" : "/"}${url}`;
     }
     return `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
-  const renderMedia = (url, nombre) => {
+  const renderMedia = (url, nombre, size = "thumb") => {
     const src = resolveMediaUrl(url);
     if (!src) return "Sin media";
     const lower = src.toLowerCase();
-    const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(lower) || lower.includes("video");
+    const isVideo = /\.(mp4|webm|mov|avi|mkv|m4v)$/i.test(lower) || lower.includes("video");
+    const className = size === "preview" ? "ej-preview" : "ej-thumb";
+
     if (isVideo) {
-      return <video src={src} controls className="ej-thumb" />;
+      return (
+        <video
+          src={src}
+          controls
+          preload="metadata"
+          playsInline
+          className={className}
+          onDoubleClick={() => setPreviewMedia({ src, nombre, isVideo: true })}
+        />
+      );
     }
-    return <img src={src} alt={nombre} className="ej-thumb" onError={(e) => { e.target.onerror = null; e.target.src = src; }} />;
+    return (
+      <img
+        src={src}
+        alt={nombre}
+        className={className}
+        onError={(e) => { e.target.onerror = null; e.target.src = src; }}
+        onDoubleClick={() => setPreviewMedia({ src, nombre, isVideo: false })}
+      />
+    );
   };
 
   return (
@@ -192,6 +212,12 @@ export default function EntrenadorEjercicios() {
                     {uploading && <small>Subiendo archivo...</small>}
                     {uploadError && <small style={{ color: "#b00020" }}>{uploadError}</small>}
                   </label>
+                  {form.videoUrl && (
+                    <div className="media-preview">
+                      <p className="media-preview-label">Vista previa</p>
+                      {renderMedia(form.videoUrl, form.nombre || "Media", "preview")}
+                    </div>
+                  )}
                   <div className="form-actions">
                     <button type="submit" className="primary-btn">Guardar</button>
                     <button type="button" onClick={() => setShowForm(false)} className="secondary-btn">Cancelar</button>
@@ -240,6 +266,12 @@ export default function EntrenadorEjercicios() {
                               <input value={editForm.videoUrl} onChange={(e) => setEditForm((p) => ({ ...p, videoUrl: e.target.value }))} placeholder="https://..." />
                               <input type="file" accept="video/*,image/*" onChange={(e) => handleFileChange(e, "edit")} disabled={uploading} />
                               {uploadError && <small style={{ color: "#b00020" }}>{uploadError}</small>}
+                              {editForm.videoUrl && (
+                                <div className="media-preview">
+                                  <p className="media-preview-label">Vista previa</p>
+                                  {renderMedia(editForm.videoUrl, editForm.nombre || ej.nombre || "Media", "preview")}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             renderMedia(ej.videoUrl, ej.nombre)
@@ -272,6 +304,22 @@ export default function EntrenadorEjercicios() {
           )}
         </div>
       </main>
+
+      {previewMedia && (
+        <div className="modal-overlay" onClick={() => setPreviewMedia(null)}>
+          <div className="media-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="media-modal-header">
+              <h4>{previewMedia.nombre || "Vista previa"}</h4>
+              <button type="button" className="secondary-btn" onClick={() => setPreviewMedia(null)}>Cerrar</button>
+            </div>
+            {previewMedia.isVideo ? (
+              <video src={previewMedia.src} controls autoPlay playsInline className="media-modal-player" />
+            ) : (
+              <img src={previewMedia.src} alt={previewMedia.nombre} className="media-modal-player" />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
