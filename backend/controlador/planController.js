@@ -5,6 +5,7 @@ import {
 import PlanesRepo from "../modelo/planesRepo.js";
 import RutinasRepo from "../modelo/rutinasRepo.js";
 import AlumnosRepo from "../modelo/alumnosRepo.js";
+import UsuariosRepo from "../modelo/usuariosRepo.js";
 import { validarToken } from "../servicio/tokenService.js";
 
 const asignacionPayloadSchema = Joi.object({
@@ -48,6 +49,7 @@ const crearPlanSchema = Joi.object({
 let planesRepo = null;
 let rutinasRepo = null;
 let alumnosRepo = null;
+let usuariosRepo = null;
 
 const extraerToken = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -81,6 +83,11 @@ const getRutinasRepo = () => {
 const getAlumnosRepo = () => {
   if (!alumnosRepo) alumnosRepo = new AlumnosRepo();
   return alumnosRepo;
+};
+
+const getUsuariosRepo = () => {
+  if (!usuariosRepo) usuariosRepo = new UsuariosRepo();
+  return usuariosRepo;
 };
 
 const handleError = (res, error) => {
@@ -198,6 +205,25 @@ export const getPlan = async (req, res) => {
       throw err;
     }
 
+    const asignacionActual =
+      Array.isArray(plan.asignaciones) &&
+      plan.asignaciones.find((a) => String(a.alumnoId) === String(alumnoId));
+
+    const vigenciaDesde = plan.vigenciaDesde || asignacionActual?.desde || null;
+    const vigenciaHasta = plan.vigenciaHasta || asignacionActual?.hasta || null;
+
+    let entrenadorId = plan.entrenadorId || asignacionActual?.asignadoPor || alumno?.entrenadorId || null;
+    let entrenadorNombre = plan.entrenadorNombre || null;
+    if (!entrenadorNombre && entrenadorId) {
+      const entrenador = await getUsuariosRepo().buscarPorId(entrenadorId);
+      entrenadorNombre = entrenador?.nombre || entrenador?.email || null;
+    }
+
+    plan.vigenciaDesde = vigenciaDesde;
+    plan.vigenciaHasta = vigenciaHasta;
+    plan.entrenadorId = plan.entrenadorId || entrenadorId;
+    plan.entrenadorNombre = plan.entrenadorNombre || entrenadorNombre;
+
     await ensureSesiones(plan);
 
     // Enriquecemos rutinas consultando por idPlan (persistente)
@@ -215,9 +241,14 @@ export const getPlan = async (req, res) => {
       nombre: plan.nombre,
       objetivo: plan.objetivo,
       vigencia: {
-        desde: plan.vigenciaDesde,
-        hasta: plan.vigenciaHasta,
+        desde: vigenciaDesde,
+        hasta: vigenciaHasta,
       },
+      entrenadorId: plan.entrenadorId || entrenadorId || null,
+      entrenadorNombre: plan.entrenadorNombre || entrenadorNombre || null,
+      entrenador: plan.entrenadorNombre || entrenadorNombre
+        ? { id: plan.entrenadorId || entrenadorId || null, nombre: plan.entrenadorNombre || entrenadorNombre }
+        : null,
       rutinas,
       asignacion: plan.asignacion,
       sesiones: plan.sesiones,

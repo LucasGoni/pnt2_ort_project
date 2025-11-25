@@ -4,14 +4,15 @@ import DataList from "../../components/DataList";
 import { useAuth } from "../../context/AuthContext";
 import usePlanAlumno from "../HomeAlumno/usePlanAlumno";
 import "../Calendar/CalendarPage.css";
+import BackButton from "../../components/BackButton.jsx";
 
 const DIA_LABEL = {
   lun: "Lun",
   mar: "Mar",
-  mie: "Mié",
+  mie: "Mie",
   jue: "Jue",
   vie: "Vie",
-  sab: "Sáb",
+  sab: "Sab",
   dom: "Dom",
 };
 
@@ -40,38 +41,57 @@ export default function PlanAlumnoPage() {
     { key: "nombre", header: "Rutina", accessor: "nombre", sortable: true },
     {
       key: "descripcion",
-      header: "Descripción",
-      accessor: (r) => r.descripcion || "—",
+      header: "Descripcion",
+      accessor: (r) => r.descripcion || "-",
     },
     {
       key: "duracion",
-      header: "Duración",
-      accessor: (r) => r.duracionMin ?? "—",
-      render: (v) => (v === "—" ? "—" : `${v} min`),
+      header: "Duracion",
+      accessor: (r) => r.duracionMin ?? "-",
+      render: (v) => (v === "-" ? "-" : `${v} min`),
       sortable: true,
     },
     {
       key: "dias",
-      header: "Días asignados",
+      header: "Dias asignados",
       accessor: (r) => r.dias ?? [],
       render: (dias) => (dias.length ? dias.map((d) => DIA_LABEL[d] || d).join(", ") : "Sin asignar"),
     },
-    {
-      key: "orden",
-      header: "Orden semanal",
-      accessor: (r) => r.orden ?? "—",
-      sortable: true,
-    },
   ];
+
+  const diasElegidos = useMemo(() => {
+    if (!plan?.asignacion) return [];
+    const set = new Set();
+    plan.asignacion.forEach((item) => (item.dias || []).forEach((d) => set.add(d)));
+    return Array.from(set);
+  }, [plan]);
+
+  const planDurationDays = useMemo(() => {
+    const desde = plan?.vigencia?.desde;
+    const hasta = plan?.vigencia?.hasta;
+    if (!desde || !hasta) return null;
+    const start = new Date(desde);
+    const end = new Date(hasta);
+    if (isNaN(start) || isNaN(end)) return null;
+    const diff = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    return diff > 0 ? diff : null;
+  }, [plan]);
+
+  const entrenadorNombre = plan?.entrenadorNombre || plan?.entrenador?.nombre || "Sin asignar";
+  const vigenciaDesde = plan?.vigencia?.desde || "No definida";
+  const vigenciaHasta = plan?.vigencia?.hasta || "Sin fin";
 
   return (
     <div className="calendar-page">
       <div className="calendar-card">
-        <div className="calendar-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <h2 style={{ margin: 0 }}>🏋️ Plan de entrenamiento</h2>
+        <div className="calendar-topbar">
+          <BackButton />
+        </div>
+        <div className="calendar-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+          <div style={{ textAlign: "center", flex: 1 }}>
+            <h2 style={{ margin: 0 }}>Plan de entrenamiento</h2>
             <p style={{ margin: "4px 0 0" }}>
-              Rutinas asignadas a tu plan actual. Podés ajustar los días en el calendario.
+              Rutinas asignadas a tu plan actual. Podes ajustar los dias en el calendario.
             </p>
           </div>
           <button className="calendar-btn" onClick={() => navigate("/calendario/alumno")}>
@@ -83,15 +103,19 @@ export default function PlanAlumnoPage() {
           <p style={{ margin: "0 0 4px", color: "#6d28d9" }}>
             Plan: <strong>{plan?.nombre ?? "Cargando..."}</strong>
           </p>
+          <p style={{ margin: "0 0 4px", color: "#6d28d9" }}>
+            Entrenador/a: <strong>{entrenadorNombre}</strong> — Vigencia: {vigenciaDesde} → {vigenciaHasta}
+          </p>
           <p style={{ margin: 0, color: "#6d28d9" }}>
-            Entrenador/a: {plan?.entrenador?.nombre || "—"} · Vigencia: desde {plan?.vigencia?.desde || "—"}
+            Duracion del plan: {planDurationDays ? `${planDurationDays} dias` : "Sin definir"} — Dias elegidos:
+            {diasElegidos.length ? ` ${diasElegidos.map((d) => DIA_LABEL[d] || d).join(", ")}` : " Sin elegir"}
           </p>
         </div>
 
         {error && <p style={{ color: "#c53030", marginTop: "8px" }}>{error}</p>}
 
         <div style={{ marginTop: "16px" }}>
-          <DataList columns={columns} data={rows} loading={isLoading} searchable />
+          <DataList columns={columns} data={rows} loading={isLoading} searchable hideImage />
         </div>
       </div>
     </div>

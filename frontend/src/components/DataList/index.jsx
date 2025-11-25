@@ -19,6 +19,7 @@ export default function DataList(props) {
     actions,
     onRowClick,
     imageAccessor,
+    hideImage = false,
   } = props;
 
   const state = useDataListState({
@@ -85,6 +86,7 @@ export default function DataList(props) {
         actions={actions}
         onRowClick={onRowClick}
         imageAccessor={imageAccessor}
+        hideImage={hideImage}
       />
 
       <DataListPagination

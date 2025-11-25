@@ -1,7 +1,7 @@
 import styles from "./DataList.module.css";
 import { renderCell, resolveImage } from "./utils.js";
 
-export function DataListCard({ row, columns, actions, onClick, imageAccessor }) {
+export function DataListCard({ row, columns, actions, onClick, imageAccessor, hideImage = false }) {
   if (!columns || columns.length === 0) return null;
 
   const primaryCol = columns[0];
@@ -38,20 +38,22 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor }) 
       <div className={styles.cardInner}>
         <div className={styles.yugiFrame}>
           {/* Imagen / arte de la carta */}
-          <div className={styles.imageFrame}>
-            {cardImage ? (
-              <img
-                src={cardImage}
-                alt={String(primaryValue)}
-                className={styles.cardImage}
-                loading="lazy"
-              />
-            ) : (
-              <div className={styles.cardImagePlaceholder}>
-                <span className={styles.placeholderText}>Sin imagen</span>
-              </div>
-            )}
-          </div>
+          {!hideImage && (
+            <div className={styles.imageFrame}>
+              {cardImage ? (
+                <img
+                  src={cardImage}
+                  alt={String(primaryValue)}
+                  className={styles.cardImage}
+                  loading="lazy"
+                />
+              ) : (
+                <div className={styles.cardImagePlaceholder}>
+                  <span className={styles.placeholderText}>Sin imagen</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Nombre + “tipo” (subtítulo) */}
           <header className={styles.cardHeader}>
