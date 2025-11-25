@@ -61,7 +61,14 @@ function App() {
             </RoleRoute>
           }
         />
-        <Route path="/entrenador/plan" element={<CrearPlan />} />
+        <Route
+          path="/entrenador/plan"
+          element={
+            <RoleRoute allowedRoles={["entrenador"]}>
+              <CrearPlan />
+            </RoleRoute>
+          }
+        />
         <Route path="/entrenador/alumnos" element={<EntrenadorAlumnos />} />
         <Route path="/entrenador/rutinas" element={<EntrenadorRutinas />} />
         <Route path="/entrenador/ejercicios" element={<EntrenadorEjercicios />} />

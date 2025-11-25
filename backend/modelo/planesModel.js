@@ -20,7 +20,7 @@ class PlanesModel {
                 },
                 alumnoId: {
                     type: DataTypes.INTEGER,
-                    allowNull: false
+                    allowNull: true
                 },
                 nombre: {
                     type: DataTypes.STRING,
@@ -53,6 +53,12 @@ class PlanesModel {
                     defaultValue: '[]'
                 },
                 asignacion: {
+                    type: DataTypes.TEXT,
+                    allowNull: false,
+                    defaultValue: '[]'
+                },
+                asignaciones: {
+                    // lista de alumnos asignados a este plan base
                     type: DataTypes.TEXT,
                     allowNull: false,
                     defaultValue: '[]'
@@ -93,6 +99,15 @@ class PlanesModel {
             }
             if (!desc.meta) {
                 await qi.addColumn('planes', 'meta', { type: DataTypes.TEXT, allowNull: true })
+            }
+            if (!desc.asignaciones) {
+                await qi.addColumn('planes', 'asignaciones', { type: DataTypes.TEXT, allowNull: false, defaultValue: '[]' })
+            }
+            if (desc.alumnoId && desc.alumnoId.allowNull === false) {
+                await qi.changeColumn('planes', 'alumnoId', {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                })
             }
         } catch (_e) {
             // si la tabla no existe todavía, sync la crea

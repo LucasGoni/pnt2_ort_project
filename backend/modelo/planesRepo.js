@@ -27,6 +27,7 @@ class PlanesRepo {
             ...plain,
             rutinas: parseJson(plain.rutinas, []),
             asignacion: parseJson(plain.asignacion, []),
+            asignaciones: parseJson(plain.asignaciones, []),
             sesiones: parseJson(plain.sesiones, []),
             meta: parseJson(plain.meta, null)
         }
@@ -47,6 +48,7 @@ class PlanesRepo {
             vigenciaHasta: data.vigencia?.hasta ?? data.vigenciaHasta ?? null,
             rutinas: JSON.stringify(data.rutinas || []),
             asignacion: JSON.stringify(data.asignacion || []),
+            asignaciones: JSON.stringify(data.asignaciones || []),
             sesiones: JSON.stringify(data.sesiones || []),
             meta: data.meta ? JSON.stringify(data.meta) : null
         })
@@ -63,6 +65,14 @@ class PlanesRepo {
         await this.#ensureReady()
         const row = await this.#planesModel.findByPk(planId)
         return this.#mapRow(row)
+    }
+
+    listarTodos = async () => {
+        await this.#ensureReady()
+        const rows = await this.#planesModel.findAll({
+            order: [['id', 'DESC']]
+        })
+        return rows.map(this.#mapRow)
     }
 
     actualizarAsignacion = async (alumnoId, asignacion) => {
@@ -102,10 +112,29 @@ class PlanesRepo {
             vigenciaHasta: data.vigencia?.hasta ?? plan.vigenciaHasta,
             rutinas: JSON.stringify(data.rutinas ?? plan.rutinas),
             asignacion: JSON.stringify(data.asignacion ?? plan.asignacion),
+            asignaciones: JSON.stringify(data.asignaciones ?? plan.asignaciones),
             sesiones: JSON.stringify(data.sesiones ?? plan.sesiones),
             meta: data.meta ? JSON.stringify(data.meta) : plan.meta
         }, { where: { id: planId } })
 
+        return this.obtenerPorId(planId)
+    }
+
+    eliminarPlan = async (planId) => {
+        await this.#ensureReady()
+        return this.#planesModel.destroy({ where: { id: planId } })
+    }
+
+    agregarAsignacion = async (planId, asignacion) => {
+        await this.#ensureReady()
+        const plan = await this.obtenerPorId(planId)
+        if (!plan) return null
+        const nuevas = Array.isArray(plan.asignaciones) ? [...plan.asignaciones] : []
+        nuevas.push(asignacion)
+        await this.#planesModel.update(
+            { asignaciones: JSON.stringify(nuevas) },
+            { where: { id: planId } }
+        )
         return this.obtenerPorId(planId)
     }
 }

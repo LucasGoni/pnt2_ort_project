@@ -37,10 +37,10 @@ function HomeEntrenador() {
           </div>
 
           <div className="card">
-            <h3>📋 Crear plan</h3>
+            <h3>📋 Planes</h3>
             <p>Diseñá un nuevo plan de entrenamiento personalizado.</p>
             <button onClick={() => navigate("/entrenador/plan")}>
-            Crear Plan</button>
+            Planes</button>
           </div>
 
           <div className="card">

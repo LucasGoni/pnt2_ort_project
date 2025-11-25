@@ -5,6 +5,7 @@ import {
 import PlanesRepo from "../modelo/planesRepo.js";
 import RutinasRepo from "../modelo/rutinasRepo.js";
 import AlumnosRepo from "../modelo/alumnosRepo.js";
+import { validarToken } from "../servicio/tokenService.js";
 
 const asignacionPayloadSchema = Joi.object({
   asignacion: Joi.array()
@@ -39,12 +40,31 @@ const crearPlanSchema = Joi.object({
   asignacion: Joi.array().default([]),
   sesiones: Joi.array().default([]),
   meta: Joi.any().optional(),
-  alumnoId: Joi.number().optional(), // opcional para plan general
+  alumnoId: Joi.number().allow(null).optional(), // opcional para plan general
 });
 
 let planesRepo = null;
 let rutinasRepo = null;
 let alumnosRepo = null;
+
+const extraerToken = (req) => {
+  const authHeader = req.headers.authorization || "";
+  if (authHeader.startsWith("Bearer ")) {
+    return authHeader.substring(7);
+  }
+  return req.body?.token || "";
+};
+
+const validarEntrenadorOAdmin = (req) => {
+  const token = extraerToken(req);
+  const payload = validarToken(token);
+  if (payload.rol !== "entrenador" && payload.rol !== "admin") {
+    const err = new Error("No autorizado");
+    err.status = 403;
+    throw err;
+  }
+  return payload;
+};
 
 const getPlanesRepo = () => {
   if (!planesRepo) planesRepo = new PlanesRepo();
@@ -188,22 +208,85 @@ export const asignarPlan = async (req, res) => {
  */
 export const crearPlanGeneral = async (req, res) => {
   try {
+    validarEntrenadorOAdmin(req);
     const { error, value } = crearPlanSchema.validate(req.body, { abortEarly: false });
     if (error) {
       return res.status(400).json({ message: error.message });
     }
-    let planCreado = null;
-    if (value.alumnoId) {
-      planCreado = await getPlanesRepo().crearParaAlumno(value.alumnoId, value);
-      await getRutinasRepo().asignarPlanARutinas(value.rutinas, planCreado.id);
-      await getAlumnosRepo().asignarPlan(value.alumnoId, planCreado.id);
-    } else {
-      // plan sin alumno asignado
-      const data = { ...value, alumnoId: null };
-      planCreado = await getPlanesRepo().crearParaAlumno(null, data);
-      await getRutinasRepo().asignarPlanARutinas(value.rutinas, planCreado.id);
-    }
+    // plan base sin alumno asignado
+    const data = { ...value, alumnoId: null, asignaciones: [] };
+    const planCreado = await getPlanesRepo().crearParaAlumno(null, data);
+    await getRutinasRepo().asignarPlanARutinas(value.rutinas, planCreado.id);
     return res.status(201).json({ plan: planCreado });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+/**
+ * Lista todos los planes (con o sin alumno asignado) con rutinas vinculadas.
+ */
+export const listarPlanesGeneral = async (_req, res) => {
+  try {
+    const planes = await getPlanesRepo().listarTodos();
+    const planesConRutinas = await Promise.all(
+      planes.map(async (plan) => {
+        const rutinas = await getRutinasRepo().listarPorPlan(plan.id);
+        return {
+          ...plan,
+          rutinas: rutinas.map((r) => ({
+            id: r.id,
+            titulo: r.titulo || r.nombre || "Rutina",
+            nivel: r.nivel || "",
+            objetivo: r.objetivo || "",
+          })),
+        };
+      })
+    );
+    return res.json({ planes: planesConRutinas });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+/**
+ * Agrega una asignación de alumno/vigencia a un plan base.
+ */
+export const agregarAsignacionPlan = async (req, res) => {
+  try {
+    const payload = validarEntrenadorOAdmin(req);
+    const planId = req.params.planId;
+    const body = req.body || {};
+    const alumnoId = parseInt(body.alumnoId);
+    if (!alumnoId) {
+      const err = new Error("alumnoId es obligatorio");
+      err.status = 400;
+      throw err;
+    }
+    const plan = await getPlanesRepo().obtenerPorId(planId);
+    if (!plan) {
+      const err = new Error("Plan no encontrado");
+      err.status = 404;
+      throw err;
+    }
+    const alumno = await getAlumnosRepo().obtenerPorId(alumnoId);
+    if (!alumno) {
+      const err = new Error("Alumno no encontrado");
+      err.status = 404;
+      throw err;
+    }
+    // actualizamos planId del alumno para reflejar asignación
+    await getAlumnosRepo().asignarPlan(alumnoId, planId);
+
+    const asignacion = {
+      alumnoId,
+      alumnoNombre: alumno.nombre,
+      desde: body.vigencia?.desde || null,
+      hasta: body.vigencia?.hasta || null,
+      asignadoPor: payload.id,
+    };
+    const actualizado = await getPlanesRepo().agregarAsignacion(planId, asignacion);
+    return res.status(201).json({ plan: actualizado });
   } catch (error) {
     return handleError(res, error);
   }
@@ -214,6 +297,7 @@ export const crearPlanGeneral = async (req, res) => {
  */
 export const actualizarPlanGeneral = async (req, res) => {
   try {
+    validarEntrenadorOAdmin(req);
     const planId = req.params.planId;
     const body = req.body || {};
     const { error, value } = crearPlanSchema.validate(body, { abortEarly: false });
@@ -231,8 +315,32 @@ export const actualizarPlanGeneral = async (req, res) => {
     await getRutinasRepo().limpiarPlan(planId);
     await getRutinasRepo().asignarPlanARutinas(value.rutinas, planId);
 
-    const updated = await getPlanesRepo().actualizarPlan(planId, value);
+    const updated = await getPlanesRepo().actualizarPlan(planId, { ...value, asignaciones: plan.asignaciones });
     return res.json({ plan: updated });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+/**
+ * Elimina un plan, desasigna rutinas y limpia el planId en alumnos.
+ */
+export const eliminarPlanGeneral = async (req, res) => {
+  try {
+    validarEntrenadorOAdmin(req);
+    const planId = req.params.planId;
+    const plan = await getPlanesRepo().obtenerPorId(planId);
+    if (!plan) {
+      const err = new Error("Plan no encontrado");
+      err.status = 404;
+      throw err;
+    }
+
+    await getRutinasRepo().limpiarPlan(planId);
+    await getAlumnosRepo().desasignarPorPlan(planId);
+    await getPlanesRepo().eliminarPlan(planId);
+
+    return res.json({ message: "Plan eliminado" });
   } catch (error) {
     return handleError(res, error);
   }
@@ -244,5 +352,7 @@ export default {
   patchSesion,
   asignarPlan,
   crearPlanGeneral,
+  listarPlanesGeneral,
   actualizarPlanGeneral,
+  eliminarPlanGeneral,
 };
