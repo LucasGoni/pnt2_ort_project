@@ -25,9 +25,7 @@ export async function getAlumnosDisponibles() {
 export async function desasignarAlumno(alumnoId) {
   const response = await api.post(`/alumnos/${alumnoId}/desasignar`);
   return response.data;
-}
-
-// Crea/actualiza el plan del alumno (persiste planId y setea idPlan en rutinas)
+}
 export async function asignarPlanAAlumno(alumnoId, payload) {
   const response = await api.post(`/alumnos/${alumnoId}/plan`, payload);
   return response.data.plan;

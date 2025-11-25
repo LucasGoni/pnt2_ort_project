@@ -19,7 +19,7 @@ const DIA_LABEL = {
 export default function PlanAlumnoPage() {
   const { user } = useAuth();
   const searchId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("alumnoId") : null;
-  // Priorizamos alumnoId (tabla alumnos) antes que el id de usuario
+
   const alumnoId = searchId || user?.alumnoId || user?.id || user?.userId || null;
   const navigate = useNavigate();
 

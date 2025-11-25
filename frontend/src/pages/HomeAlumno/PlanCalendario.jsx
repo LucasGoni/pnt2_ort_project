@@ -112,8 +112,7 @@ export default function PlanCalendario() {
     }
   };
 
-  const handleHorarioChange = async (sesion, field, value) => {
-    // field: start|end, value: "HH:mm"
+  const handleHorarioChange = async (sesion, field, value) => {
     if (sesion.done) return; // no permitir editar horario si está completada
     const [hh, mm] = value.split(":").map(Number);
     const base = new Date(sesion.start);

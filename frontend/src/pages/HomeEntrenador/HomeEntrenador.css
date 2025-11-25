@@ -1,4 +1,4 @@
-/* Fondo general */
+
 .home-container {
   min-height: 100vh;
   display: flex;
@@ -11,7 +11,7 @@
 
 .home-container .card button { width: 100%; }
 
-/* Sección principal */
+
 .home-main {
   flex: 1;
   display: flex;
@@ -24,7 +24,7 @@
 .welcome {
   font-size: 2rem;
   margin-bottom: 0.5rem;
-  color: #673ab7; /* violeta principal */
+  color: #673ab7; 
 }
 
 .subtitle {
@@ -32,7 +32,7 @@
   margin-bottom: 2rem;
 }
 
-/* Grilla de 2x2 tarjetas */
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(250px, 1fr));
@@ -41,7 +41,7 @@
   max-width: 800px;
 }
 
-/* Tarjetas */
+
 .card {
   background-color: #ffffff;
   border-radius: 16px;
@@ -82,7 +82,7 @@
   background-color: #5e35b1;
 }
 
-/* Footer */
+
 .footer {
   display: flex;
   justify-content: flex-end;

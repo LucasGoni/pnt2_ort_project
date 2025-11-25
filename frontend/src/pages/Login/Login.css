@@ -1,14 +1,14 @@
-/* Fondo general */
+
 .login-page {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f6f2fa; /* violeta suave tipo Fit&Track */
+  background-color: #f6f2fa; 
   font-family: "Inter", sans-serif;
 }
 
-/* Tarjeta blanca */
+
 .login-card {
   background-color: #ffffff;
   padding: 2.5rem;
@@ -18,11 +18,11 @@
   text-align: center;
 }
 
-/* Títulos */
+
 .login-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #5b32a3; /* violeta Fit&Track */
+  color: #5b32a3; 
   margin-bottom: 0.5rem;
 }
 
@@ -32,7 +32,7 @@
   margin-bottom: 2rem;
 }
 
-/* Inputs */
+
 .login-input {
   width: 100%;
   padding: 0.8rem;
@@ -40,7 +40,7 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
-  box-sizing: border-box; /* evita que sobresalga */
+  box-sizing: border-box; 
   transition: all 0.2s ease-in-out;
 }
 
@@ -50,7 +50,7 @@
   box-shadow: 0 0 5px rgba(90, 50, 180, 0.2);
 }
 
-/* Botón */
+
 .login-btn {
   width: 100%;
   padding: 0.9rem;
@@ -67,7 +67,7 @@
   background-color: #5b32a3;
 }
 
-/* Texto inferior */
+
 .login-register {
   margin-top: 1.5rem;
   font-size: 0.95rem;

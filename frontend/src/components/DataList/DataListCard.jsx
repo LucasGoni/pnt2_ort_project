@@ -13,7 +13,6 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor, hi
   const cardImage = resolveImage(row, imageAccessor);
   const clickable = typeof onClick === "function";
 
-  // cacheamos las acciones para no llamar actions(row) varias veces
   const cardActions = typeof actions === "function" ? actions(row) ?? [] : [];
 
   const handleCardClick = () => {
@@ -37,7 +36,7 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor, hi
     >
       <div className={styles.cardInner}>
         <div className={styles.yugiFrame}>
-          {/* Imagen / arte de la carta */}
+          {}
           {!hideImage && (
             <div className={styles.imageFrame}>
               {cardImage ? (
@@ -55,7 +54,7 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor, hi
             </div>
           )}
 
-          {/* Nombre + “tipo” (subtítulo) */}
+          {}
           <header className={styles.cardHeader}>
             <h3 className={styles.cardTitle}>{primaryValue}</h3>
             {secondaryValue && (
@@ -63,7 +62,7 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor, hi
             )}
           </header>
 
-          {/* Atributos / stats de la carta */}
+          {}
           {hasDetails && (
             <section className={styles.cardBody}>
               {detailCols.map((col) => (
@@ -77,12 +76,10 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor, hi
             </section>
           )}
 
-          {/* Footer tipo ATK/DEF + acciones */}
+          {}
           <footer className={styles.cardFooter}>
             <div className={styles.atkDefArea}>
-              {/* acá en el futuro podés mapear, por ejemplo:
-                  ATK {row.atk} / DEF {row.def}
-               */}
+              {}
             </div>
 
             {hasActions && (

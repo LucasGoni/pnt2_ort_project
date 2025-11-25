@@ -9,16 +9,13 @@ export default function PerfilEntrenador() {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-
-  // Prellenar con los datos del usuario logueado
+  const [message, setMessage] = useState("");
   useEffect(() => {
     async function cargarDatos() {
       if (user) {
         setNombre(user.nombre || "");
         setApellido(user.apellido || "");
-      } else {
-        // fallback por si no está en memoria
+      } else {
         try {
           const data = await authService.getCurrentUser();
           if (data?.user) {
