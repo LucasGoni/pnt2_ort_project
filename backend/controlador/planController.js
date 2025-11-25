@@ -21,6 +21,8 @@ const asignacionPayloadSchema = Joi.object({
 const sesionSchema = Joi.object({
   rutinaId: Joi.string().required(),
   done: Joi.boolean().required(),
+  start: Joi.string().optional(),
+  end: Joi.string().optional(),
 });
 
 const crearPlanSchema = Joi.object({
@@ -66,6 +68,97 @@ const handleError = (res, error) => {
   return res.status(error.status || 500).json({ message: error.message || "Error interno del servidor" });
 };
 
+const parseISODate = (iso) => {
+  const [y, m, d] = (iso || "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return isNaN(dt.getTime()) ? null : dt;
+};
+
+const startOfWeekMonday = (date) => {
+  const d = new Date(date);
+  const day = d.getUTCDay(); // 0 domingo
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setUTCDate(d.getUTCDate() + diff);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+};
+
+// Genera sesiones para todas las semanas del rango de vigencia.
+// Mantiene intactas las sesiones ya completadas (done=true) aunque cambie la asignación.
+const ensureSesiones = async (plan) => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const desdeRaw = parseISODate(plan.vigenciaDesde) ?? hoy;
+  // no generamos sesiones en el pasado; arrancamos desde hoy o vigencia.desde, lo que sea mayor
+  const desdeDate = desdeRaw < hoy ? hoy : desdeRaw;
+  const hastaDate =
+    parseISODate(plan.vigenciaHasta) ?? new Date(desdeDate.getTime() + 28 * 24 * 60 * 60 * 1000); // +4 semanas
+
+  // Deduplicamos sesiones existentes y separamos completadas
+  const sesionesRaw = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
+  const byKeyAll = new Map();
+  sesionesRaw.forEach((s) => {
+    const key = `${s.fecha}_${s.rutinaId}`;
+    const prev = byKeyAll.get(key);
+    // preferimos la que esté done=true; si ambas false, la última
+    if (!prev || s.done || !prev.done) {
+      byKeyAll.set(key, s);
+    }
+  });
+
+  const sesiones = Array.from(byKeyAll.values());
+  const sesionesDone = sesiones.filter((s) => !!s.done); // preservamos completadas
+  const doneKeys = new Set(sesionesDone.map((s) => `${s.fecha}_${s.rutinaId}`));
+  const byKey = new Map(sesiones.filter((s) => !s.done).map((s) => [`${s.fecha}_${s.rutinaId}`, s]));
+  const nuevas = [];
+
+  // Recorrer día a día el rango y crear sesión según asignación
+  const asignacion = plan.asignacion || [];
+  const totalDays =
+    Math.floor((hastaDate.getTime() - desdeDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(desdeDate.getTime());
+    d.setUTCDate(desdeDate.getUTCDate() + i);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    const fechaISO = `${yyyy}-${mm}-${dd}`;
+    const dow = ["dom", "lun", "mar", "mie", "jue", "vie", "sab"][d.getUTCDay()];
+
+    asignacion.forEach((item) => {
+      if (!item.dias?.includes(dow)) return;
+      const key = `${fechaISO}_${item.rutinaId}`;
+      const existente = byKey.get(key);
+      if (doneKeys.has(key)) {
+        // ya hay una sesión completada para esta fecha/rutina; no generamos otra
+        return;
+      }
+      if (existente) {
+        nuevas.push(existente);
+      } else {
+        // sesión nueva con horario por defecto 09-10 UTC (equivale a 9-10 local si TZ default es local)
+        const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0));
+        const end = new Date(start.getTime());
+        end.setUTCHours(end.getUTCHours() + 1);
+        nuevas.push({
+          fecha: fechaISO,
+          rutinaId: item.rutinaId,
+          start: start.toISOString(),
+          end: end.toISOString(),
+          done: false,
+        });
+      }
+    });
+  }
+
+  // Reemplazamos sesiones no completadas con las nuevas; mantenemos las completadas
+  plan.sesiones = [...sesionesDone, ...nuevas];
+  await getPlanesRepo().actualizarPlan(plan.id, { sesiones: plan.sesiones });
+
+  return plan.sesiones || [];
+};
+
 export const getPlan = async (req, res) => {
   try {
     const alumnoId = req.params.alumnoId;
@@ -84,6 +177,8 @@ export const getPlan = async (req, res) => {
       err.status = 404;
       throw err;
     }
+
+    await ensureSesiones(plan);
 
     // Enriquecemos rutinas consultando por idPlan (persistente)
     const rutinasDb = await getRutinasRepo().listarPorPlan(plan.id);
@@ -119,14 +214,20 @@ export const putAsignacion = (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    getPlanesRepo().actualizarAsignacion(req.params.alumnoId, req.body.asignacion).then((updatedPlan) => {
-      if (!updatedPlan) {
-        const err = new Error("El alumno no tiene un plan asignado");
-        err.status = 404;
-        throw err;
-      }
-      return res.json({ plan: updatedPlan });
-    }).catch((err) => handleError(res, err));
+    getPlanesRepo()
+      .actualizarAsignacion(req.params.alumnoId, req.body.asignacion)
+      .then(async (updatedPlan) => {
+        if (!updatedPlan) {
+          const err = new Error("El alumno no tiene un plan asignado");
+          err.status = 404;
+          throw err;
+        }
+        // Regeneramos sesiones para reflejar la nueva asignación en todo el rango
+        await ensureSesiones(updatedPlan);
+        const refreshed = await getPlanesRepo().obtenerPorId(updatedPlan.id);
+        return res.json({ plan: refreshed ?? updatedPlan });
+      })
+      .catch((err) => handleError(res, err));
   } catch (error) {
     return handleError(res, error);
   }
@@ -140,21 +241,36 @@ export const patchSesion = (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    getPlanesRepo().obtenerPorAlumnoId(req.params.alumnoId).then((plan) => {
-      if (!plan) {
-        const err = new Error("El alumno no tiene un plan asignado");
-        err.status = 404;
-        throw err;
-      }
-      const sesiones = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
-      const existing = sesiones.find((s) => s.fecha === fecha && String(s.rutinaId) === String(req.body.rutinaId));
-      if (existing) {
-        existing.done = !!req.body.done;
-      } else {
-        sesiones.push({ fecha, rutinaId: req.body.rutinaId, done: !!req.body.done });
-      }
-      return getPlanesRepo().marcarSesion(req.params.alumnoId, sesiones);
-    }).then((updated) => res.json({ plan: updated }))
+    getPlanesRepo()
+      .obtenerPorAlumnoId(req.params.alumnoId)
+      .then((plan) => {
+        if (!plan) {
+          const err = new Error("El alumno no tiene un plan asignado");
+          err.status = 404;
+          throw err;
+        }
+        const sesiones = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
+        const existing = sesiones.find(
+          (s) => s.fecha === fecha && String(s.rutinaId) === String(req.body.rutinaId)
+        );
+        const start = req.body.start || existing?.start;
+        const end = req.body.end || existing?.end;
+        if (existing) {
+          existing.done = !!req.body.done;
+          if (start) existing.start = start;
+          if (end) existing.end = end;
+        } else {
+          sesiones.push({
+            fecha,
+            rutinaId: req.body.rutinaId,
+            done: !!req.body.done,
+            start,
+            end,
+          });
+        }
+        return getPlanesRepo().marcarSesion(req.params.alumnoId, sesiones);
+      })
+      .then((updated) => res.json({ plan: updated }))
       .catch((err) => handleError(res, err));
   } catch (error) {
     return handleError(res, error);

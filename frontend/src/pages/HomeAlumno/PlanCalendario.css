@@ -127,25 +127,6 @@
   font-size: 0.9rem;
 }
 
-.orden-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #ede7f6;
-  color: #4b2e83;
-  padding: 4px 8px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-}
-
-.orden-badge input {
-  width: 60px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-weight: 600;
-}
-
 .dias-selector {
   display: flex;
   flex-wrap: wrap;
@@ -249,6 +230,21 @@
 
 .sesion-vacia {
   color: #6b4fbb;
+}
+
+.horario-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.horario-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  color: #4b2e83;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 1024px) {

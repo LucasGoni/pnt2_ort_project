@@ -27,12 +27,19 @@ const formatFechaCorta = (date) =>
     day: "2-digit",
   });
 
+const toTimeInputValue = (date) => {
+  const d = new Date(date);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+};
+
 export default function PlanCalendario() {
   const { user } = useAuth();
   const searchId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("alumnoId") : null;
   const alumnoId = searchId || user?.alumnoId || user?.id || user?.userId || null; // preferimos alumnoId
 
-  const { plan, events, isLoading, error, saveAsignacion, toggleSesion } = usePlanAlumno(alumnoId);
+  const { plan, events, isLoading, error, saveAsignacion, toggleSesion, refetch } = usePlanAlumno(alumnoId);
   const [draftAsignacion, setDraftAsignacion] = useState([]);
   const [saving, setSaving] = useState(false);
   const [sesionLoadingId, setSesionLoadingId] = useState(null);
@@ -68,6 +75,7 @@ export default function PlanCalendario() {
             nombre: rutina?.nombre ?? event.title,
             done: event.meta?.done ?? false,
             start: event.start,
+            end: event.end,
           };
         })
         .sort((a, b) => a.start - b.start),
@@ -85,11 +93,6 @@ export default function PlanCalendario() {
     );
   };
 
-  const updateOrden = (rutinaId, orden) => {
-    const valor = Number(orden) || 1;
-    setDraftAsignacion((prev) => prev.map((item) => (item.rutinaId === rutinaId ? { ...item, orden: valor } : item)));
-  };
-
   const handleGuardar = async () => {
     try {
       setSaving(true);
@@ -103,6 +106,31 @@ export default function PlanCalendario() {
     try {
       setSesionLoadingId(sesion.key);
       await toggleSesion(sesion.fecha, sesion.rutinaId, !sesion.done);
+      await refetch(); // refrescamos estado para permitir edición de días sin recargar
+    } finally {
+      setSesionLoadingId(null);
+    }
+  };
+
+  const handleHorarioChange = async (sesion, field, value) => {
+    // field: start|end, value: "HH:mm"
+    if (sesion.done) return; // no permitir editar horario si está completada
+    const [hh, mm] = value.split(":").map(Number);
+    const base = new Date(sesion.start);
+    const nuevaFecha = new Date(base);
+    nuevaFecha.setHours(hh || 0, mm || 0, 0, 0);
+    const startISO = field === "start" ? nuevaFecha.toISOString() : sesion.start?.toISOString?.() || sesion.start;
+    let endISO;
+    if (field === "end") {
+      endISO = nuevaFecha.toISOString();
+    } else {
+      const endDate = sesion.end ? new Date(sesion.end) : new Date(base);
+      endDate.setHours((hh || 0) + 1, mm || 0, 0, 0);
+      endISO = endDate.toISOString();
+    }
+    try {
+      setSesionLoadingId(sesion.key);
+      await toggleSesion(sesion.fecha, sesion.rutinaId, sesion.done, startISO, endISO);
     } finally {
       setSesionLoadingId(null);
     }
@@ -115,9 +143,6 @@ export default function PlanCalendario() {
           <div>
             <p className="plan-etiqueta">Plan asignado</p>
             <h3 className="plan-nombre">{plan?.nombre ?? "Plan en preparación"}</h3>
-            <p className="plan-objetivo">{plan?.objetivo}</p>
-            <p className="plan-entrenador">Entrenador/a: {plan?.entrenador?.nombre}</p>
-            <p className="plan-vigencia">Vigencia: desde {plan?.vigencia?.desde}</p>
           </div>
           <div className="plan-alumno">
             <p className="plan-etiqueta">Alumno</p>
@@ -145,15 +170,6 @@ export default function PlanCalendario() {
                         <p className="rutina-nombre">{rutina?.nombre}</p>
                         {rutina?.descripcion && <p className="rutina-descripcion">{rutina.descripcion}</p>}
                       </div>
-                      <label className="orden-badge">
-                        Orden
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.orden ?? 1}
-                          onChange={(e) => updateOrden(item.rutinaId, e.target.value)}
-                        />
-                      </label>
                     </div>
 
                     <div className="dias-selector">
@@ -188,18 +204,27 @@ export default function PlanCalendario() {
         )}
       </div>
 
-      <div className="calendar-panel">
-        <div className="calendar-panel-header">
-          <div>
-            <p className="plan-etiqueta">Semana</p>
-            <h4>Calendario semanal</h4>
-            <p className="calendar-subtitle">Horarios por defecto: 09:00 a 10:00.</p>
+        <div className="calendar-panel">
+          <div className="calendar-panel-header">
+            <div>
+              <p className="plan-etiqueta">Semana</p>
+              <h4>Calendario semanal</h4>
+            </div>
           </div>
-        </div>
 
         <div className="calendar-wrapper">
           <div className="calendar-body">
-            <Calendar mode="alumno" defaultView="week" events={events} />
+            <Calendar
+              mode="alumno"
+              defaultView="week"
+              events={events}
+              eventPropGetter={(event) => {
+                const done = event.meta?.done;
+                return done
+                  ? { style: { backgroundColor: "#7c3aed", opacity: 0.65 } }
+                  : {};
+              }}
+            />
           </div>
         </div>
 
@@ -216,10 +241,30 @@ export default function PlanCalendario() {
                     disabled={sesionLoadingId === sesion.key}
                   />
                   <span>
-                    {formatFechaCorta(sesion.start)} — {sesion.nombre}
+                    {formatFechaCorta(sesion.start)} — {sesion.nombre || `Rutina ${sesion.rutinaId}`}
                     {sesion.done ? " (completada)" : ""}
                   </span>
                 </label>
+                <div className="horario-editor">
+                  <label>
+                    Inicio
+                    <input
+                      type="time"
+                      value={toTimeInputValue(sesion.start)}
+                      onChange={(e) => handleHorarioChange(sesion, "start", e.target.value)}
+                      disabled={sesionLoadingId === sesion.key || sesion.done}
+                    />
+                  </label>
+                  <label>
+                    Fin
+                    <input
+                      type="time"
+                      value={toTimeInputValue(sesion.end || sesion.start)}
+                      onChange={(e) => handleHorarioChange(sesion, "end", e.target.value)}
+                      disabled={sesionLoadingId === sesion.key || sesion.done}
+                    />
+                  </label>
+                </div>
               </li>
             ))}
             {!sesionesSemana.length && <li className="sesion-vacia">Aún no hay sesiones para esta semana.</li>}
