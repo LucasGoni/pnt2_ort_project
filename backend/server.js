@@ -4,6 +4,8 @@ import RouterAlumnos from './router/alumnos.js'
 import RouterEjercicios from './router/ejercicios.js'
 import RouterRutinas from './router/rutinas.js'
 import RouterPlanes from './router/planes.js'
+import RouterUploads from './router/uploads.js'
+import RouterEntrenadores from './router/entrenadores.js'
 
 class Server {
     #port = null
@@ -13,9 +15,10 @@ class Server {
     #routerEjercicios = null
     #routerRutinas = null
     #routerPlanes = null
+    #routerUploads = null
+    #routerEntrenadores = null
 
     constructor(port) {
-        // Garantizamos TZ del curso
         process.env.TZ = 'America/Argentina/Buenos_Aires'
         this.#port = port
         this.#app = express()
@@ -24,6 +27,8 @@ class Server {
         this.#routerEjercicios = new RouterEjercicios()
         this.#routerRutinas = new RouterRutinas()
         this.#routerPlanes = new RouterPlanes()
+        this.#routerUploads = new RouterUploads()
+        this.#routerEntrenadores = new RouterEntrenadores()
         this.#config()
     }
 
@@ -37,6 +42,8 @@ class Server {
         this.#app.use('/api/ejercicios', this.#routerEjercicios.config())
         this.#app.use('/api/rutinas', this.#routerRutinas.config())
         this.#app.use('/api/planes', this.#routerPlanes.config())
+        this.#app.use('/api/uploads', this.#routerUploads.config())
+        this.#app.use('/api/entrenadores', this.#routerEntrenadores.config())
 
         this.#app.get('/health', (req, res) => {
             res.json({

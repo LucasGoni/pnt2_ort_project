@@ -158,4 +158,51 @@
 .ej-thumb {
   max-height: 60px;
   border-radius: 6px;
+  cursor: pointer;
+}
+
+.ej-preview {
+  width: 100%;
+  max-height: 320px;
+  border-radius: 10px;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.media-preview {
+  margin-top: 0.35rem;
+  background: #f7f7ff;
+  border: 1px solid #e5e1ff;
+  border-radius: 10px;
+  padding: 0.5rem;
+}
+
+.media-preview-label {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+  color: #4b4b6f;
+}
+
+.media-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1rem;
+  max-width: 800px;
+  width: 92vw;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+}
+
+.media-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.media-modal-player {
+  width: 100%;
+  max-height: 70vh;
+  border-radius: 10px;
+  object-fit: contain;
 }

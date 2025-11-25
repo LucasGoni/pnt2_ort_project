@@ -1,64 +1,41 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../services/api";
 
-const DIA_INDEX = { lun: 0, mar: 1, mie: 2, jue: 3, vie: 4, sab: 5, dom: 6 };
-
-const startOfWeekMonday = (date = new Date()) => {
-  const base = new Date(date);
-  const day = base.getDay(); // 0 domingo, 1 lunes...
-  const diff = day === 0 ? -6 : 1 - day;
-  base.setDate(base.getDate() + diff);
-  base.setHours(0, 0, 0, 0);
-  return base;
+const parseISODate = (iso) => {
+  const [y, m, d] = (iso || "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const dt = new Date(y, (m || 1) - 1, d);
+  return isNaN(dt.getTime()) ? null : dt;
 };
 
-const toLocalISODate = (date) => {
-  const d = new Date(date);
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return local.toISOString().split("T")[0];
-};
-
-const mapPlanToEvents = (plan, referenceDate = new Date()) => {
+const mapPlanToEvents = (plan) => {
   if (!plan) return [];
-
-  const monday = startOfWeekMonday(referenceDate);
-  const rutinasById = new Map(plan.rutinas?.map((r) => [r.id, r]) ?? []);
+  const rutinasById = new Map(plan.rutinas?.map((r) => [String(r.id), r]) ?? []);
   const sesiones = plan.sesiones ?? [];
 
-  const events = [];
-
-  plan.asignacion?.forEach((item) => {
-    const rutina = rutinasById.get(item.rutinaId);
-    if (!rutina) return;
-
-    item.dias.forEach((dia) => {
-      const offset = DIA_INDEX[dia];
-      if (offset === undefined) return;
-
-      const start = new Date(monday);
-      start.setDate(monday.getDate() + offset);
-      start.setHours(9, 0, 0, 0);
-
-      const end = new Date(start);
-      end.setHours(10, 0, 0, 0);
-
-      const fechaISO = toLocalISODate(start);
-      const sesion = sesiones.find((s) => s.fecha === fechaISO && s.rutinaId === rutina.id);
-      const done = sesion?.done ?? false;
-
-      events.push({
-        title: `${done ? "✅ " : ""}${rutina.nombre}`,
+  return sesiones
+    .map((sesion) => {
+      const rutina = rutinasById.get(String(sesion.rutinaId));
+      const nombreRutina = rutina?.nombre || rutina?.titulo || `Rutina ${sesion.rutinaId}`;
+      const base = parseISODate(sesion.fecha) || new Date();
+      const start = sesion.start
+        ? new Date(sesion.start)
+        : new Date(base.getFullYear(), base.getMonth(), base.getDate(), 9, 0);
+      const end = sesion.end
+        ? new Date(sesion.end)
+        : new Date(base.getFullYear(), base.getMonth(), base.getDate(), 10, 0);
+      const done = !!sesion.done;
+      return {
+        title: `${done ? "✅ " : ""}${nombreRutina}`,
         start,
         end,
         meta: {
-          rutinaId: rutina.id,
+          rutinaId: String(sesion.rutinaId),
           done,
         },
-      });
-    });
-  });
-
-  return events.sort((a, b) => a.start - b.start);
+      };
+    })
+    .sort((a, b) => a.start - b.start);
 };
 
 /**
@@ -103,9 +80,9 @@ export default function usePlanAlumno(alumnoId) {
         const { data } = await api.put(`/alumnos/${alumnoId}/plan/asignacion`, {
           asignacion: draftAsignacion,
         });
-        setPlan(data.plan);
+        setPlan(data.plan ?? data);
         setError(null);
-        return data.plan;
+        return data.plan ?? data;
       } catch (err) {
         const message = err.response?.data?.message || "No pudimos guardar la asignación.";
         setError(message);
@@ -116,15 +93,17 @@ export default function usePlanAlumno(alumnoId) {
   );
 
   const toggleSesion = useCallback(
-    async (fecha, rutinaId, done) => {
+    async (fecha, rutinaId, done, start, end) => {
       try {
         const { data } = await api.patch(`/alumnos/${alumnoId}/plan/sesiones/${fecha}`, {
           rutinaId,
           done,
+          start,
+          end,
         });
-        setPlan(data.plan);
+        setPlan(data.plan ?? data);
         setError(null);
-        return data.plan;
+        return data.plan ?? data;
       } catch (err) {
         const message = err.response?.data?.message || "No pudimos actualizar la sesión.";
         setError(message);

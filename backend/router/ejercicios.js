@@ -12,6 +12,8 @@ class RouterEjercicios {
         const router = express.Router()
         router.get('/', this.#controlador.listar)
         router.post('/', this.#controlador.crear)
+        router.put('/:id', this.#controlador.actualizar)
+        router.delete('/:id', this.#controlador.eliminar)
         return router
     }
 }
