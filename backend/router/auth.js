@@ -14,6 +14,7 @@ class RouterAuth {
         router.post('/register', this.#controlador.registrar)
         router.post('/login', this.#controlador.login)
         router.get('/me', this.#controlador.obtenerPerfil)
+        router.put('/profile', this.#controlador.actualizarPerfil)
         router.post('/refresh', this.#controlador.refresh)
         router.post('/logout', this.#controlador.logout)
 

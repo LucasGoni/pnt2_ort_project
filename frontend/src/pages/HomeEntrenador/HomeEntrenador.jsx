@@ -1,7 +1,7 @@
 import React from "react";
-import "./HomeEntrenador.css";
-import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import LogoutButton from "../../components/LogoutButton";
+import "./HomeEntrenador.css";
 
 
 function HomeEntrenador() {
@@ -14,6 +14,13 @@ function HomeEntrenador() {
         <p className="subtitle">Seleccioná una opción para comenzar:</p>
 
         <div className="card-grid">
+          <div className="card">
+            <h3>Mi perfil</h3>
+            <p>Actualizá tu nombre y apellido.</p>
+            <button onClick={() => navigate("/entrenador/perfil")}>
+              Editar perfil
+            </button>
+          </div>
           <div className="card">
             <h3>👤 Ver alumnos</h3>
             <p>Consulta la lista de tus alumnos y sus datos de progreso.</p>
@@ -54,7 +61,7 @@ function HomeEntrenador() {
       </main>
 
       <footer className="footer">
-        <Link to="/logout" className="logout-btn">Cerrar sesión</Link>
+        <LogoutButton />
       </footer>
     </div>
   );

@@ -20,6 +20,10 @@ const authService = {
       }
     }
   },
+  updateProfile: async (data) => {
+    const response = await api.put("/auth/profile", data);
+    return response.data;
+  },
 
   getCurrentUser: async () => {
     const response = await api.get("/auth/me");
