@@ -2,15 +2,19 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutButton from "../../components/LogoutButton";
 import "./HomeEntrenador.css";
+import { useAuth } from "../../context/AuthContext";
 
 
 function HomeEntrenador() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="home-container">
       <main className="home-main">
-        <h2 className="welcome">¡Bienvenido, Entrenador!</h2>
+        <h2 className="welcome">
+          ¡Bienvenido, {user?.nombre || user?.email || "Entrenador"}!
+        </h2>
         <p className="subtitle">Seleccioná una opción para comenzar:</p>
 
         <div className="card-grid">

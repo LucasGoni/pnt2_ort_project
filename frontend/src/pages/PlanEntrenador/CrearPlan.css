@@ -14,9 +14,16 @@
 .plan-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.plan-title-block {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .plan-kicker {
@@ -26,16 +33,6 @@
   color: #7a6de0;
   font-weight: 700;
   font-size: 0.85rem;
-}
-
-.plan-badge {
-  background: #f7f7ff;
-  color: #5d3fd3;
-  border: 1px solid #d9d2ff;
-  padding: 0.6rem 0.9rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(93, 63, 211, 0.08);
-  font-weight: 700;
 }
 
 .rutinas-actions {

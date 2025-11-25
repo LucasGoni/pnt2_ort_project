@@ -27,7 +27,9 @@ export default function CrearPlan() {
         if (alive) setError(err?.response?.data?.message || "No pudimos cargar alumnos/rutinas");
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const handleChange = (e) => {
@@ -41,7 +43,7 @@ export default function CrearPlan() {
         return { ...prev, rutinasIds: Array.from(current) };
       });
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
     setMensaje("");
     setError("");
@@ -53,8 +55,8 @@ export default function CrearPlan() {
     setMensaje("");
     if (!form.alumnoId || !form.rutinasIds.length || !form.inicio || !form.fin) return;
     const alumnoIdNum = Number(form.alumnoId);
-    const alumno = alumnos.find(a => Number(a.id) === alumnoIdNum);
-    const rutinasSeleccionadas = rutinas.filter(r => form.rutinasIds.includes(Number(r.id)));
+    const alumno = alumnos.find((a) => Number(a.id) === alumnoIdNum);
+    const rutinasSeleccionadas = rutinas.filter((r) => form.rutinasIds.includes(Number(r.id)));
 
     setLoading(true);
     try {
@@ -79,13 +81,10 @@ export default function CrearPlan() {
         <div className="plan-content">
           <div className="plan-header">
             <BackButton />
-            <div>
-              <p className="plan-kicker">Asignación</p>
+            <div className="plan-title-block">
+              <p className="plan-kicker">Asignaci&oacute;n</p>
               <h2 className="welcome">Crear plan</h2>
-              <p className="subtitle">Asigná una rutina a un alumno por un período definido.</p>
-            </div>
-            <div className="plan-badge">
-              <span>Plan rápido</span>
+              <p className="subtitle">Asigna una rutina a un alumno por un periodo definido.</p>
             </div>
           </div>
 
@@ -93,13 +92,13 @@ export default function CrearPlan() {
             <button
               type="button"
               className={`add-plan-btn ${showForm ? "is-open" : ""}`}
-              onClick={() => setShowForm(prev => !prev)}
+              onClick={() => setShowForm((prev) => !prev)}
             >
               <div className="add-rutina-content">
                 <span className="rutina-row-title">{showForm ? "Cerrar formulario" : "Crear plan"}</span>
                 <div className="rutina-row-chips">
-                  <span className="rutina-row-item">{alumnos.find(a => a.id === form.alumnoId)?.nombre || "Alumno"}</span>
-                  <span className="rutina-row-item">{rutinas.find(r => r.id === form.rutinaId)?.titulo || "Rutina"}</span>
+                  <span className="rutina-row-item">{alumnos.find((a) => a.id === form.alumnoId)?.nombre || "Alumno"}</span>
+                  <span className="rutina-row-item">{rutinas.find((r) => r.id === form.rutinaId)?.titulo || "Rutina"}</span>
                   <span className="rutina-row-item">{form.inicio || "Inicio"}</span>
                   <span className="rutina-row-item">{form.fin || "Fin"}</span>
                 </div>
@@ -116,13 +115,17 @@ export default function CrearPlan() {
                   <label>
                     Alumno
                     <select name="alumnoId" value={form.alumnoId} onChange={handleChange} required>
-                      <option value="">Elegí alumno</option>
-                      {alumnos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                      <option value="">Eleg&iacute; alumno</option>
+                      {alumnos.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.nombre}
+                        </option>
+                      ))}
                     </select>
                   </label>
 
                   <fieldset className="rutinas-fieldset">
-                    <legend>Rutinas (seleccioná una o varias)</legend>
+                    <legend>Rutinas (seleccion&aacute; una o varias)</legend>
                     <div className="rutinas-grid">
                       {rutinas.map((r) => (
                         <label key={r.id} className="rutina-checkbox">
@@ -161,24 +164,20 @@ export default function CrearPlan() {
                   </label>
 
                   <div className="form-actions">
-                    <button type="submit" className="primary-btn" disabled={loading}>{loading ? "Asignando..." : "Asignar plan"}</button>
-                    <button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Cancelar</button>
+                    <button type="submit" className="primary-btn" disabled={loading}>
+                      {loading ? "Asignando..." : "Asignar plan"}
+                    </button>
+                    <button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>
+                      Cancelar
+                    </button>
                   </div>
                 </form>
               </div>
             </div>
           )}
 
-          {mensaje && (
-            <div className="plan-alert">
-              {mensaje}
-            </div>
-          )}
-          {error && (
-            <div className="plan-alert error">
-              {error}
-            </div>
-          )}
+          {mensaje && <div className="plan-alert">{mensaje}</div>}
+          {error && <div className="plan-alert error">{error}</div>}
         </div>
       </main>
     </div>

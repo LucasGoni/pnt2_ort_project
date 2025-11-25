@@ -61,7 +61,7 @@ export default function EntrenadorEjercicios() {
         <div className="ej-content">
           <div className="ej-header">
             <BackButton />
-            <div>
+            <div className="ej-title-block">
               <h2 className="welcome">Ejercicios</h2>
               <p className="subtitle">Listado de ejercicios disponibles para tus rutinas.</p>
             </div>
