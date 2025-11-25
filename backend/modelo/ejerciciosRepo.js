@@ -19,6 +19,19 @@ class EjerciciosRepo {
         return creado.get({ plain: true })
     }
 
+    actualizar = async (id, data) => {
+        await this.#ensureReady()
+        const rows = await this.#ejerciciosModel.update(data, { where: { id } })
+        if (!rows[0]) return null
+        const encontrado = await this.#ejerciciosModel.findByPk(id)
+        return encontrado ? encontrado.get({ plain: true }) : null
+    }
+
+    eliminar = async id => {
+        await this.#ensureReady()
+        return this.#ejerciciosModel.destroy({ where: { id } })
+    }
+
     listar = async ({ entrenadorId } = {}) => {
         await this.#ensureReady()
         const where = entrenadorId ? { entrenadorId } : {}

@@ -73,6 +73,71 @@ class EjerciciosControlador {
             this.#manejarError(res, error, 'No se pudo crear el ejercicio')
         }
     }
+
+    actualizar = async (req, res) => {
+        try {
+            const token = this.#extraerToken(req)
+            const payload = validarToken(token)
+
+            if (payload.rol !== 'entrenador' && payload.rol !== 'admin') {
+                const error = new Error('No autorizado')
+                error.status = 403
+                throw error
+            }
+
+            const id = parseInt(req.params.id)
+            if (!id) {
+                const error = new Error('Ejercicio inválido')
+                error.status = 400
+                throw error
+            }
+
+            const { nombre, descripcion, videoUrl } = req.body || {}
+            const actualizado = await this.#repo.actualizar(id, {
+                ...(nombre ? { nombre: nombre.trim() } : {}),
+                descripcion: descripcion?.trim() ?? null,
+                videoUrl: videoUrl?.trim() ?? null
+            })
+            if (!actualizado) {
+                const error = new Error('Ejercicio no encontrado')
+                error.status = 404
+                throw error
+            }
+            res.json(actualizado)
+        }
+        catch (error) {
+            this.#manejarError(res, error, 'No se pudo actualizar el ejercicio')
+        }
+    }
+
+    eliminar = async (req, res) => {
+        try {
+            const token = this.#extraerToken(req)
+            const payload = validarToken(token)
+
+            if (payload.rol !== 'entrenador' && payload.rol !== 'admin') {
+                const error = new Error('No autorizado')
+                error.status = 403
+                throw error
+            }
+            const id = parseInt(req.params.id)
+            if (!id) {
+                const error = new Error('Ejercicio inválido')
+                error.status = 400
+                throw error
+            }
+            const deleted = await this.#repo.eliminar(id)
+            if (!deleted) {
+                const error = new Error('Ejercicio no encontrado')
+                error.status = 404
+                throw error
+            }
+            res.json({ message: 'Ejercicio eliminado' })
+        }
+        catch (error) {
+            this.#manejarError(res, error, 'No se pudo eliminar el ejercicio')
+        }
+    }
 }
 
 export default EjerciciosControlador
