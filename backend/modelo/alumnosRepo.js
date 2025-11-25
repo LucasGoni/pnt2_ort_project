@@ -63,6 +63,11 @@ class AlumnosRepo {
     return updated ? updated.get({ plain: true }) : null;
   };
 
+  desasignarPorPlan = async (planId) => {
+    await this.#ensureReady();
+    await this.#alumnosModel.update({ planId: null }, { where: { planId } });
+  };
+
   seedDesdeUsuarios = async (usuarios) => {
     await this.#ensureReady();
     if (!Array.isArray(usuarios) || !usuarios.length) return;

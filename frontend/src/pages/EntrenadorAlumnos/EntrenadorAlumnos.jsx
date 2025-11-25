@@ -20,7 +20,7 @@ export default function EntrenadorAlumnos() {
   const [poolLoading, setPoolLoading] = useState(false);
   const [pool, setPool] = useState([]);
   const [assigningId, setAssigningId] = useState(null);
-  const [poolCounts, setPoolCounts] = useState({ disponibles: 0, total: 0 });
+  const [poolCounts, setPoolCounts] = useState({ disponibles: 0, mis: 0, total: 0 });
   const [removingId, setRemovingId] = useState(null);
   const [mensaje, setMensaje] = useState("");
   const [selectedAlumno, setSelectedAlumno] = useState(null);
@@ -78,19 +78,24 @@ export default function EntrenadorAlumnos() {
   }, [user?.id]);
 
   const fetchPool = async () => {
+    if (!user?.id) return;
     setPoolLoading(true);
     try {
       const data = await getAlumnosDisponibles();
-      const disponibles = (data || []).filter((p) => !p.entrenadorId).length;
-      setPool(Array.isArray(data) ? data : []);
+      const todos = Array.isArray(data) ? data : [];
+      const visibles = todos.filter((p) => !p.entrenadorId || p.entrenadorId === user.id);
+      const disponibles = visibles.filter((p) => !p.entrenadorId).length;
+      const mis = visibles.filter((p) => p.entrenadorId === user.id).length;
+      setPool(visibles);
       setPoolCounts({
         disponibles,
-        total: Array.isArray(data) ? data.length : 0,
+        mis,
+        total: todos.length,
       });
     } catch (error) {
       console.error("Error al cargar pool de alumnos:", error);
       setPool([]);
-      setPoolCounts({ disponibles: 0, total: 0 });
+      setPoolCounts({ disponibles: 0, mis: 0, total: 0 });
     } finally {
       setPoolLoading(false);
     }
@@ -98,7 +103,7 @@ export default function EntrenadorAlumnos() {
 
   useEffect(() => {
     fetchPool();
-  }, []);
+  }, [user?.id]);
 
   const columns = [
     // 🟡 Título de la carta: nombre del alumno
@@ -148,11 +153,15 @@ export default function EntrenadorAlumnos() {
         getAlumnosDisponibles(),
       ]);
       setRows(Array.isArray(mios) ? mios : []);
-      const disponibles = (todos || []).filter((p) => !p.entrenadorId).length;
-      setPool(Array.isArray(todos) ? todos : []);
+      const todosArr = Array.isArray(todos) ? todos : [];
+      const visibles = todosArr.filter((p) => !p.entrenadorId || p.entrenadorId === user.id);
+      const disponibles = visibles.filter((p) => !p.entrenadorId).length;
+      const mis = visibles.filter((p) => p.entrenadorId === user.id).length;
+      setPool(visibles);
       setPoolCounts({
         disponibles,
-        total: Array.isArray(todos) ? todos.length : 0,
+        mis,
+        total: todosArr.length,
       });
     } catch (error) {
       console.error("No se pudo asignar alumno:", error);
@@ -170,11 +179,15 @@ export default function EntrenadorAlumnos() {
         getAlumnosDisponibles(),
       ]);
       setRows(Array.isArray(mios) ? mios : []);
-      const disponibles = (todos || []).filter((p) => !p.entrenadorId).length;
-      setPool(Array.isArray(todos) ? todos : []);
+      const todosArr = Array.isArray(todos) ? todos : [];
+      const visibles = todosArr.filter((p) => !p.entrenadorId || p.entrenadorId === user.id);
+      const disponibles = visibles.filter((p) => !p.entrenadorId).length;
+      const mis = visibles.filter((p) => p.entrenadorId === user.id).length;
+      setPool(visibles);
       setPoolCounts({
         disponibles,
-        total: Array.isArray(todos) ? todos.length : 0,
+        mis,
+        total: todosArr.length,
       });
       setMensaje("Alumno quitado de tu lista.");
     } catch (error) {
@@ -209,6 +222,9 @@ export default function EntrenadorAlumnos() {
               <div className="rutina-row-chips">
                 <span className="rutina-row-item">
                   Disponibles: {poolCounts.disponibles}
+                </span>
+                <span className="rutina-row-item">
+                  Mis alumnos: {poolCounts.mis}
                 </span>
                 <span className="rutina-row-item">
                   Total: {poolCounts.total}
