@@ -68,11 +68,12 @@ export default function PlanCalendario() {
         .map((event) => {
           const rutinaId = event.meta.rutinaId;
           const rutina = rutinasMap.get(rutinaId);
+          const nombre = rutina?.nombre || rutina?.titulo || `Rutina ${rutinaId}`;
           return {
             key: `${rutinaId}-${toLocalISODate(event.start)}`,
             fecha: toLocalISODate(event.start),
             rutinaId,
-            nombre: rutina?.nombre ?? event.title,
+            nombre,
             done: event.meta?.done ?? false,
             start: event.start,
             end: event.end,
@@ -97,6 +98,7 @@ export default function PlanCalendario() {
     try {
       setSaving(true);
       await saveAsignacion(draftAsignacion);
+      await refetch(); // recarga el plan para reflejar los cambios en la vista
     } finally {
       setSaving(false);
     }
@@ -112,7 +114,8 @@ export default function PlanCalendario() {
     }
   };
 
-  const handleHorarioChange = async (sesion, field, value) => {
+  const handleHorarioChange = async (sesion, field, value) => {
+
     if (sesion.done) return; // no permitir editar horario si está completada
     const [hh, mm] = value.split(":").map(Number);
     const base = new Date(sesion.start);
