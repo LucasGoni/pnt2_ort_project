@@ -43,7 +43,7 @@ function HomeAlumno() {
           <div className="card">
             <h3>Progreso</h3>
             <p>Visualiza tu evolucion y los logros alcanzados.</p>
-            <button>Ver progreso</button>
+            <button onClick={() => navigate("/alumno/progreso")}>Ver progreso</button>
           </div>
 
           <div className="card">

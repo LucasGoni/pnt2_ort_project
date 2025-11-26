@@ -14,6 +14,7 @@ import EntrenadorEjercicios from "./pages/EntrenadorEjercicios/EntrenadorEjercic
 import CrearPlan from "./pages/PlanEntrenador/CrearPlan.jsx";
 import PerfilEntrenador from "./pages/PerfilEntrenador/PerfilEntrenador.jsx";
 import PerfilAlumno from "./pages/PerfilAlumno/PerfilAlumno.jsx";
+import ProgresoAlumno from "./pages/ProgresoAlumno/ProgresoAlumno.jsx";
 
 
 function App() {
@@ -37,6 +38,10 @@ function App() {
           element={
             <HomeAlumno />
           }
+        />
+        <Route
+          path="/alumno/progreso"
+          element={<ProgresoAlumno />}
         />
 
         <Route
