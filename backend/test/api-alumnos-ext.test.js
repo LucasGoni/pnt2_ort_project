@@ -48,10 +48,13 @@ describe("*** TEST DEL SERVICIO API ALUMNOS (ext) ***", () => {
         .set("Authorization", `Bearer ${tokenEntrenador}`);
 
       expect(response.status).to.eql(200);
-      expect(response.body).to.be.an("array");
 
-      if (response.body.length > 0) {
-        const evento = response.body[0];
+      expect(response.body).to.be.an("object");
+      expect(response.body).to.have.property("events");
+      expect(response.body.events).to.be.an("array");
+
+      if (response.body.events.length > 0) {
+        const evento = response.body.events[0];
         expect(evento).to.include.keys(
           "title",
           "start",
