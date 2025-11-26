@@ -253,33 +253,43 @@ export const getPlan = async (req, res) => {
   }
 };
 
-export const putAsignacion = (req, res) => {
+export const putAsignacion = async (req, res) => {
   try {
     const { error } = asignacionPayloadSchema.validate(req.body, { abortEarly: false });
     if (error) {
       return res.status(400).json({ message: error.message });
     }
 
-    getPlanesRepo()
-      .actualizarAsignacion(req.params.alumnoId, req.body.asignacion)
-      .then(async (updatedPlan) => {
-        if (!updatedPlan) {
-          const err = new Error("El alumno no tiene un plan asignado");
-          err.status = 404;
-          throw err;
-        }
-        // Regeneramos sesiones para reflejar la nueva asignación en todo el rango
-        await ensureSesiones(updatedPlan);
-        const refreshed = await getPlanesRepo().obtenerPorId(updatedPlan.id);
-        return res.json({ plan: refreshed ?? updatedPlan });
-      })
-      .catch((err) => handleError(res, err));
+    const alumno = await getAlumnosRepo().obtenerPorId(req.params.alumnoId);
+    let plan = null;
+    if (alumno?.planId) {
+      plan = await getPlanesRepo().obtenerPorId(alumno.planId);
+    }
+    if (!plan) {
+      plan = await getPlanesRepo().obtenerPorAlumnoId(req.params.alumnoId);
+    }
+    if (!plan) {
+      const err = new Error("El alumno no tiene un plan asignado");
+      err.status = 404;
+      throw err;
+    }
+
+    const updatedPlan = await getPlanesRepo().actualizarAsignacion(req.params.alumnoId, req.body.asignacion);
+    if (!updatedPlan) {
+      const err = new Error("El alumno no tiene un plan asignado");
+      err.status = 404;
+      throw err;
+    }
+    // Regeneramos sesiones para reflejar la nueva asignación en todo el rango
+    await ensureSesiones(updatedPlan);
+    const refreshed = await getPlanesRepo().obtenerPorId(updatedPlan.id);
+    return res.json({ plan: refreshed ?? updatedPlan });
   } catch (error) {
     return handleError(res, error);
   }
 };
 
-export const patchSesion = (req, res) => {
+export const patchSesion = async (req, res) => {
   try {
     const fecha = req.params.fecha;
     const { error } = sesionSchema.validate(req.body);
@@ -287,37 +297,40 @@ export const patchSesion = (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    getPlanesRepo()
-      .obtenerPorAlumnoId(req.params.alumnoId)
-      .then((plan) => {
-        if (!plan) {
-          const err = new Error("El alumno no tiene un plan asignado");
-          err.status = 404;
-          throw err;
-        }
-        const sesiones = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
-        const existing = sesiones.find(
-          (s) => s.fecha === fecha && String(s.rutinaId) === String(req.body.rutinaId)
-        );
-        const start = req.body.start || existing?.start;
-        const end = req.body.end || existing?.end;
-        if (existing) {
-          existing.done = !!req.body.done;
-          if (start) existing.start = start;
-          if (end) existing.end = end;
-        } else {
-          sesiones.push({
-            fecha,
-            rutinaId: req.body.rutinaId,
-            done: !!req.body.done,
-            start,
-            end,
-          });
-        }
-        return getPlanesRepo().marcarSesion(req.params.alumnoId, sesiones);
-      })
-      .then((updated) => res.json({ plan: updated }))
-      .catch((err) => handleError(res, err));
+    const alumno = await getAlumnosRepo().obtenerPorId(req.params.alumnoId);
+    let plan = null;
+    if (alumno?.planId) {
+      plan = await getPlanesRepo().obtenerPorId(alumno.planId);
+    }
+    if (!plan) {
+      plan = await getPlanesRepo().obtenerPorAlumnoId(req.params.alumnoId);
+    }
+    if (!plan) {
+      const err = new Error("El alumno no tiene un plan asignado");
+      err.status = 404;
+      throw err;
+    }
+    const sesiones = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
+    const existing = sesiones.find(
+      (s) => s.fecha === fecha && String(s.rutinaId) === String(req.body.rutinaId)
+    );
+    const start = req.body.start || existing?.start;
+    const end = req.body.end || existing?.end;
+    if (existing) {
+      existing.done = !!req.body.done;
+      if (start) existing.start = start;
+      if (end) existing.end = end;
+    } else {
+      sesiones.push({
+        fecha,
+        rutinaId: req.body.rutinaId,
+        done: !!req.body.done,
+        start,
+        end,
+      });
+    }
+    const updated = await getPlanesRepo().marcarSesion(req.params.alumnoId, sesiones);
+    return res.json({ plan: updated });
   } catch (error) {
     return handleError(res, error);
   }
