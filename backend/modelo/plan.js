@@ -1,5 +1,4 @@
 import Joi from "joi";
-import planSeeds from "../data/planes.js";
 
 export const DIA_SEMANA = ["lun", "mar", "mie", "jue", "vie", "sab", "dom"];
 
@@ -109,19 +108,6 @@ function crearPlanPorDefecto(alumnoId) {
     sesiones: [],
   };
 }
-
-function seedInicial() {
-  planSeeds.forEach((seed) => {
-    const copia = clonar(seed);
-    if (!copia.asignacion || !copia.asignacion.length) {
-      copia.asignacion = generarAsignacionPorDefecto(copia.rutinas ?? []);
-    }
-    if (!copia.sesiones) copia.sesiones = [];
-    planes.set(copia.alumnoId, copia);
-  });
-}
-
-seedInicial();
 
 /**
  * Devuelve el plan activo del alumno; si no existe, crea uno base.

@@ -4,9 +4,7 @@ import { DataListGrid } from "./DataListGrid.jsx";
 import { DataListPagination } from "./DataListPagination.jsx";
 import styles from "./DataList.module.css";
 
-/**
- * Componente principal: orquesta el flujo pero no tiene lógica pesada.
- */
+
 export default function DataList(props) {
   const {
     columns = [],
@@ -19,6 +17,7 @@ export default function DataList(props) {
     actions,
     onRowClick,
     imageAccessor,
+    hideImage = false,
   } = props;
 
   const state = useDataListState({
@@ -85,6 +84,7 @@ export default function DataList(props) {
         actions={actions}
         onRowClick={onRowClick}
         imageAccessor={imageAccessor}
+        hideImage={hideImage}
       />
 
       <DataListPagination

@@ -1,4 +1,4 @@
-/* src/components/Calendar/Calendar.css */
+
 .rbc-toolbar .rbc-btn-group button {
   border-radius: 8px;
   padding: 6px 10px;
@@ -8,7 +8,7 @@
   color: #fff;
   border: none;
 }
-/* --- FIX superposición botones react-big-calendar --- */
+
 .rbc-toolbar button {
   width: auto !important;
   flex: 0 0 auto !important;
@@ -32,13 +32,13 @@
   text-align: center;
   white-space: nowrap;
 }
-/* anula la regla .card button { width:100% } dentro del calendario */
+
 .calendar-card .rbc-toolbar button {
   width: auto !important;
   flex: 0 0 auto !important;
 }
 
-/* de paso, ordenamos el toolbar en 3 columnas */
+
 .calendar-wrapper .rbc-toolbar {
   display: grid !important;
   grid-template-columns: auto 1fr auto;

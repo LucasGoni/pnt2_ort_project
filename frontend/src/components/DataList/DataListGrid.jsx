@@ -9,6 +9,7 @@ export function DataListGrid({
   actions,
   onRowClick,
   imageAccessor,
+  hideImage = false,
 }) {
   if (loading) {
     return <div className={styles.stateMessage}>Cargando…</div>;
@@ -28,6 +29,7 @@ export function DataListGrid({
           actions={actions}
           onClick={onRowClick}
           imageAccessor={imageAccessor}
+          hideImage={hideImage}
         />
       ))}
     </div>

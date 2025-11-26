@@ -1,7 +1,7 @@
 import styles from "./DataList.module.css";
 import { renderCell, resolveImage } from "./utils.js";
 
-export function DataListCard({ row, columns, actions, onClick, imageAccessor }) {
+export function DataListCard({ row, columns, actions, onClick, imageAccessor, hideImage = false }) {
   if (!columns || columns.length === 0) return null;
 
   const primaryCol = columns[0];
@@ -13,7 +13,6 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor }) 
   const cardImage = resolveImage(row, imageAccessor);
   const clickable = typeof onClick === "function";
 
-  // cacheamos las acciones para no llamar actions(row) varias veces
   const cardActions = typeof actions === "function" ? actions(row) ?? [] : [];
 
   const handleCardClick = () => {
@@ -37,23 +36,25 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor }) 
     >
       <div className={styles.cardInner}>
         <div className={styles.yugiFrame}>
-          {/* Imagen / arte de la carta */}
-          <div className={styles.imageFrame}>
-            {cardImage ? (
-              <img
-                src={cardImage}
-                alt={String(primaryValue)}
-                className={styles.cardImage}
-                loading="lazy"
-              />
-            ) : (
-              <div className={styles.cardImagePlaceholder}>
-                <span className={styles.placeholderText}>Sin imagen</span>
-              </div>
-            )}
-          </div>
+          {}
+          {!hideImage && (
+            <div className={styles.imageFrame}>
+              {cardImage ? (
+                <img
+                  src={cardImage}
+                  alt={String(primaryValue)}
+                  className={styles.cardImage}
+                  loading="lazy"
+                />
+              ) : (
+                <div className={styles.cardImagePlaceholder}>
+                  <span className={styles.placeholderText}>Sin imagen</span>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Nombre + “tipo” (subtítulo) */}
+          {}
           <header className={styles.cardHeader}>
             <h3 className={styles.cardTitle}>{primaryValue}</h3>
             {secondaryValue && (
@@ -61,7 +62,7 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor }) 
             )}
           </header>
 
-          {/* Atributos / stats de la carta */}
+          {}
           {hasDetails && (
             <section className={styles.cardBody}>
               {detailCols.map((col) => (
@@ -75,12 +76,10 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor }) 
             </section>
           )}
 
-          {/* Footer tipo ATK/DEF + acciones */}
+          {}
           <footer className={styles.cardFooter}>
             <div className={styles.atkDefArea}>
-              {/* acá en el futuro podés mapear, por ejemplo:
-                  ATK {row.atk} / DEF {row.def}
-               */}
+              {}
             </div>
 
             {hasActions && (
