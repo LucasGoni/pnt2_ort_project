@@ -104,6 +104,7 @@ class PlanesRepo {
         if (!plan) return null
 
         await this.#planesModel.update({
+            alumnoId: data.alumnoId ?? plan.alumnoId,
             nombre: data.nombre ?? plan.nombre,
             objetivo: data.objetivo ?? plan.objetivo,
             entrenadorId: data.entrenadorId ?? plan.entrenadorId,

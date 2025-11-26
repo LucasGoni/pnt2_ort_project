@@ -1,10 +1,7 @@
 import { useMemo, useState } from "react";
 import { normalizeForSort, safeGet } from "./utils.js";
 
-/**
- * Separa TODA la lógica de estado del DataList.
- * Así podés testear este hook con facilidad sin montar el UI.
- */
+
 export function useDataListState({ columns, data, initialPageSize }) {
   const [query, setQuery] = useState("");
   const [pageSize, setPageSize] = useState(initialPageSize);
@@ -30,9 +27,7 @@ export function useDataListState({ columns, data, initialPageSize }) {
   const sortableColumns = useMemo(
     () => normalizedColumns.filter((c) => c.sortable),
     [normalizedColumns]
-  );
-
-  // Búsqueda
+  );
   const filtered = useMemo(() => {
     if (!query.trim()) return data;
     const q = query.toLowerCase();
@@ -46,9 +41,7 @@ export function useDataListState({ columns, data, initialPageSize }) {
         }
       })
     );
-  }, [data, query, normalizedColumns]);
-
-  // Ordenamiento
+  }, [data, query, normalizedColumns]);
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
     const col = normalizedColumns.find((c) => c.key === sortKey);
@@ -65,18 +58,14 @@ export function useDataListState({ columns, data, initialPageSize }) {
       return 0;
     });
     return copy;
-  }, [filtered, sortKey, sortDir, normalizedColumns]);
-
-  // Paginado
+  }, [filtered, sortKey, sortDir, normalizedColumns]);
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);
 
   const pagedRows = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return sorted.slice(start, start + pageSize);
-  }, [sorted, currentPage, pageSize]);
-
-  // Handlers
+  }, [sorted, currentPage, pageSize]);
   const handleSetQuery = (value) => {
     setQuery(value);
     setPage(1);

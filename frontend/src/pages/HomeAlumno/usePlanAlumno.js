@@ -38,9 +38,7 @@ const mapPlanToEvents = (plan) => {
     .sort((a, b) => a.start - b.start);
 };
 
-/**
- * Hook para obtener el plan del alumno y mapearlo al calendario.
- */
+
 export default function usePlanAlumno(alumnoId) {
   const [plan, setPlan] = useState(null);
   const [events, setEvents] = useState([]);
@@ -56,8 +54,7 @@ export default function usePlanAlumno(alumnoId) {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await api.get(`/alumnos/${alumnoId}/plan`);
-      // backend puede responder { plan: {...} } o el plan directo
+      const { data } = await api.get(`/alumnos/${alumnoId}/plan`);
       setPlan(data.plan ?? data);
     } catch (err) {
       setError(err.response?.data?.message || "No pudimos traer tu plan.");

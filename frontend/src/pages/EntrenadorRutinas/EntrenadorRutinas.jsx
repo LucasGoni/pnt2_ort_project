@@ -168,8 +168,7 @@ export default function EntrenadorRutinas() {
         videoUrl: ""
       });
       setEjercicios(prev => [nuevo, ...prev]);
-      setEjercicioNuevo({ nombre: "", descripcion: "" });
-      // preseleccionamos el nuevo ejercicio en el formulario abierto
+      setEjercicioNuevo({ nombre: "", descripcion: "" });
       if (expandedId) {
         setFormsEjercicio(prev => ({
           ...prev,
