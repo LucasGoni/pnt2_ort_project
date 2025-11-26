@@ -1,4 +1,4 @@
-// src/components/Calendar/Calendar.jsx
+
 import React, { useMemo } from "react";
 import { Calendar as RBCalendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
@@ -15,12 +15,7 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-/**
- * props:
- * - mode: "alumno" | "entrenador"
- * - events?: { title:string, start:Date, end:Date, meta?:any }[]
- * - defaultView?: "month" | "week" | "day"
- */
+
 export default function Calendar({
   mode = "alumno",
   events,
@@ -37,8 +32,7 @@ export default function Calendar({
         endAccessor="end"
         defaultView={defaultView}
         popup // <- habilita el popup “+N más”
-        toolbar // toolbar con Mes/Semana/Día
-        // eventPropGetter={eventPropGetter}
+        toolbar // toolbar con Mes/Semana/Día
         messages={{
           month: "Mes",
           week: "Semana",

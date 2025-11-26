@@ -19,13 +19,13 @@
   margin: 0 0 12px;
 }
 
-/* Refuerzo: que NADA los estire en esta página */
+
 .calendar-page .rbc-toolbar button {
   width: auto !important;
   flex: 0 0 auto !important;
 }
 
-/* Orden del toolbar en 3 columnas para esta página */
+
 .calendar-page .rbc-toolbar {
   display: grid !important;
   grid-template-columns: auto 1fr auto !important;

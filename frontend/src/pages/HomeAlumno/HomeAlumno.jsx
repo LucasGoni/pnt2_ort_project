@@ -45,26 +45,6 @@ function HomeAlumno() {
             <p>Visualiza tu evolucion y los logros alcanzados.</p>
             <button>Ver progreso</button>
           </div>
-
-          <div className="card">
-            <h3>Mensajes</h3>
-            <p>Lee los comentarios y recomendaciones de tu entrenador.</p>
-            <button>Ver mensajes</button>
-          </div>
-        </div>
-
-        <div className="mi-rutina-section">
-          <div className="plan-section-header">
-            <div>
-              <h3>Mi rutina</h3>
-              <p>Rutinas asignadas a tu plan vigente.</p>
-            </div>
-            <div className="plan-alumno">
-              <p className="plan-etiqueta">Alumno</p>
-              <strong>{user?.nombre || user?.email || "Vos"}</strong>
-            </div>
-          </div>
-          <MiRutina />
         </div>
       </main>
 

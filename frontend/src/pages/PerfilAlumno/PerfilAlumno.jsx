@@ -50,8 +50,7 @@ export default function PerfilAlumno() {
     try {
       await authService.updateProfile({
         nombre,
-        apellido,
-        // mandamos como números si hay valor, si no null
+        apellido,
         peso: peso !== "" ? Number(peso) : null,
         altura: altura !== "" ? Number(altura) : null,
         avatarUrl: avatarUrl || null,

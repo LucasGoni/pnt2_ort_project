@@ -56,7 +56,7 @@ button:hover {
 
 .form input {
   width: 100%;
-  box-sizing: border-box; /* evita que el padding se sume al ancho */
+  box-sizing: border-box; 
   padding: 0.8rem;
   border-radius: 6px;
   border: 1px solid #ddd;

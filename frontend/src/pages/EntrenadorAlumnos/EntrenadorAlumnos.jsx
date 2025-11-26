@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "../../App.css";
 import DataList from "../../components/DataList"; // 👈 nuevo import (usa index.jsx)
 import { useAuth } from "../../context/AuthContext";
@@ -11,8 +10,7 @@ import {
 } from "../../services/alumnosServices.js"; // 👈 ajustá el nombre al de tu servicio real
 import BackButton from "../../components/BackButton.jsx";
 
-export default function EntrenadorAlumnos() {
-  // const navigate = useNavigate();
+export default function EntrenadorAlumnos() {
   const { user } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,9 +37,7 @@ export default function EntrenadorAlumnos() {
   };
 
   useEffect(() => {
-    let alive = true;
-
-    // si todavía no hay user.id, no pedimos nada
+    let alive = true;
     if (!user?.id) {
       setLoading(false);
       return () => {
@@ -105,14 +101,9 @@ export default function EntrenadorAlumnos() {
     fetchPool();
   }, [user?.id]);
 
-  const columns = [
-    // 🟡 Título de la carta: nombre del alumno
-    { key: "nombre", header: "Nombre", accessor: "nombre", sortable: true },
-
-    // 🔵 Subtítulo: objetivo principal
-    { key: "objetivo", header: "Objetivo", accessor: "objetivo" },
-
-    // 🟣 Stats / atributos
+  const columns = [
+    { key: "nombre", header: "Nombre", accessor: "nombre", sortable: true },
+    { key: "objetivo", header: "Objetivo", accessor: "objetivo" },
     { key: "email", header: "Email", accessor: "email", sortable: true },
     {
       key: "estado",
@@ -121,9 +112,7 @@ export default function EntrenadorAlumnos() {
       sortable: true,
       render: (v) => (v === "activo" ? "Activo" : "Pausado"),
     },
-  ];
-
-  // Click en la carta completa
+  ];
   const handleRowClick = (row) => {
     openFicha(row);
   };
@@ -146,8 +135,7 @@ export default function EntrenadorAlumnos() {
   const handleAsignar = async (alumnoId) => {
     setAssigningId(alumnoId);
     try {
-      await asignarAlumnoAEntrenador(alumnoId);
-      // recargamos lista del entrenador y pool
+      await asignarAlumnoAEntrenador(alumnoId);
       const [mios, todos] = await Promise.all([
         getAlumnosByEntrenador(user.id),
         getAlumnosDisponibles(),

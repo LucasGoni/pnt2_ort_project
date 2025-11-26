@@ -5,6 +5,7 @@ import {
 import PlanesRepo from "../modelo/planesRepo.js";
 import RutinasRepo from "../modelo/rutinasRepo.js";
 import AlumnosRepo from "../modelo/alumnosRepo.js";
+import UsuariosRepo from "../modelo/usuariosRepo.js";
 import { validarToken } from "../servicio/tokenService.js";
 
 const asignacionPayloadSchema = Joi.object({
@@ -42,12 +43,13 @@ const crearPlanSchema = Joi.object({
   asignacion: Joi.array().default([]),
   sesiones: Joi.array().default([]),
   meta: Joi.any().optional(),
-  alumnoId: Joi.number().allow(null).optional(), // opcional para plan general
+  alumnoId: Joi.number().allow(null).optional(), 
 });
 
 let planesRepo = null;
 let rutinasRepo = null;
 let alumnosRepo = null;
+let usuariosRepo = null;
 
 const extraerToken = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -83,6 +85,11 @@ const getAlumnosRepo = () => {
   return alumnosRepo;
 };
 
+const getUsuariosRepo = () => {
+  if (!usuariosRepo) usuariosRepo = new UsuariosRepo();
+  return usuariosRepo;
+};
+
 const handleError = (res, error) => {
   console.error("[planController] error no controlado:", error);
   return res.status(error.status || 500).json({ message: error.message || "Error interno del servidor" });
@@ -97,43 +104,36 @@ const parseISODate = (iso) => {
 
 const startOfWeekMonday = (date) => {
   const d = new Date(date);
-  const day = d.getUTCDay(); // 0 domingo
+  const day = d.getUTCDay(); 
   const diff = day === 0 ? -6 : 1 - day;
   d.setUTCDate(d.getUTCDate() + diff);
   d.setUTCHours(0, 0, 0, 0);
   return d;
 };
 
-// Genera sesiones para todas las semanas del rango de vigencia.
-// Mantiene intactas las sesiones ya completadas (done=true) aunque cambie la asignación.
 const ensureSesiones = async (plan) => {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
   const desdeRaw = parseISODate(plan.vigenciaDesde) ?? hoy;
-  // no generamos sesiones en el pasado; arrancamos desde hoy o vigencia.desde, lo que sea mayor
   const desdeDate = desdeRaw < hoy ? hoy : desdeRaw;
   const hastaDate =
-    parseISODate(plan.vigenciaHasta) ?? new Date(desdeDate.getTime() + 28 * 24 * 60 * 60 * 1000); // +4 semanas
-
-  // Deduplicamos sesiones existentes y separamos completadas
+    parseISODate(plan.vigenciaHasta) ?? new Date(desdeDate.getTime() + 28 * 24 * 60 * 60 * 1000); 
   const sesionesRaw = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
   const byKeyAll = new Map();
   sesionesRaw.forEach((s) => {
     const key = `${s.fecha}_${s.rutinaId}`;
     const prev = byKeyAll.get(key);
-    // preferimos la que esté done=true; si ambas false, la última
     if (!prev || s.done || !prev.done) {
       byKeyAll.set(key, s);
     }
   });
 
   const sesiones = Array.from(byKeyAll.values());
-  const sesionesDone = sesiones.filter((s) => !!s.done); // preservamos completadas
+  const sesionesDone = sesiones.filter((s) => !!s.done); 
   const doneKeys = new Set(sesionesDone.map((s) => `${s.fecha}_${s.rutinaId}`));
   const byKey = new Map(sesiones.filter((s) => !s.done).map((s) => [`${s.fecha}_${s.rutinaId}`, s]));
   const nuevas = [];
 
-  // Recorrer día a día el rango y crear sesión según asignación
   const asignacion = plan.asignacion || [];
   const totalDays =
     Math.floor((hastaDate.getTime() - desdeDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
@@ -151,13 +151,11 @@ const ensureSesiones = async (plan) => {
       const key = `${fechaISO}_${item.rutinaId}`;
       const existente = byKey.get(key);
       if (doneKeys.has(key)) {
-        // ya hay una sesión completada para esta fecha/rutina; no generamos otra
         return;
       }
       if (existente) {
         nuevas.push(existente);
       } else {
-        // sesión nueva con horario por defecto 09-10 UTC (equivale a 9-10 local si TZ default es local)
         const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0));
         const end = new Date(start.getTime());
         end.setUTCHours(end.getUTCHours() + 1);
@@ -172,7 +170,6 @@ const ensureSesiones = async (plan) => {
     });
   }
 
-  // Reemplazamos sesiones no completadas con las nuevas; mantenemos las completadas
   plan.sesiones = [...sesionesDone, ...nuevas];
   await getPlanesRepo().actualizarPlan(plan.id, { sesiones: plan.sesiones });
 
@@ -183,8 +180,6 @@ export const getPlan = async (req, res) => {
   try {
     const alumnoId = req.params.alumnoId;
     const alumno = await getAlumnosRepo().obtenerPorId(alumnoId);
-
-    // preferimos el planId del alumno; si no existe, usamos el primero por alumnoId
     let plan = null;
     if (alumno?.planId) {
       plan = await getPlanesRepo().obtenerPorId(alumno.planId);
@@ -198,9 +193,35 @@ export const getPlan = async (req, res) => {
       throw err;
     }
 
+    const asignacionActual =
+      Array.isArray(plan.asignaciones) &&
+      plan.asignaciones.find((a) => String(a.alumnoId) === String(alumnoId));
+
+    const vigenciaDesde = plan.vigenciaDesde || asignacionActual?.desde || null;
+    const vigenciaHasta = plan.vigenciaHasta || asignacionActual?.hasta || null;
+
+    let entrenadorId = plan.entrenadorId || asignacionActual?.asignadoPor || alumno?.entrenadorId || null;
+    let entrenadorNombre = plan.entrenadorNombre || null;
+    if (!entrenadorNombre && entrenadorId) {
+      const entrenador = await getUsuariosRepo().buscarPorId(entrenadorId);
+      entrenadorNombre = entrenador?.nombre || entrenador?.email || null;
+    }
+
+    plan.vigenciaDesde = vigenciaDesde;
+    plan.vigenciaHasta = vigenciaHasta;
+    plan.entrenadorId = plan.entrenadorId || entrenadorId;
+    plan.entrenadorNombre = plan.entrenadorNombre || entrenadorNombre;
+
+    if (String(plan.alumnoId) !== String(alumnoId)) {
+      await getPlanesRepo().actualizarPlan(plan.id, { alumnoId });
+      plan.alumnoId = alumnoId;
+    }
+    if (!alumno?.planId || String(alumno.planId) !== String(plan.id)) {
+      await getAlumnosRepo().asignarPlan(alumnoId, plan.id);
+    }
+
     await ensureSesiones(plan);
 
-    // Enriquecemos rutinas consultando por idPlan (persistente)
     const rutinasDb = await getRutinasRepo().listarPorPlan(plan.id);
     const rutinas = rutinasDb.map((r) => ({
       id: String(r.id),
@@ -215,9 +236,14 @@ export const getPlan = async (req, res) => {
       nombre: plan.nombre,
       objetivo: plan.objetivo,
       vigencia: {
-        desde: plan.vigenciaDesde,
-        hasta: plan.vigenciaHasta,
+        desde: vigenciaDesde,
+        hasta: vigenciaHasta,
       },
+      entrenadorId: plan.entrenadorId || entrenadorId || null,
+      entrenadorNombre: plan.entrenadorNombre || entrenadorNombre || null,
+      entrenador: plan.entrenadorNombre || entrenadorNombre
+        ? { id: plan.entrenadorId || entrenadorId || null, nombre: plan.entrenadorNombre || entrenadorNombre }
+        : null,
       rutinas,
       asignacion: plan.asignacion,
       sesiones: plan.sesiones,
