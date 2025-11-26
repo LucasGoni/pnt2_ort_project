@@ -95,6 +95,39 @@ const handleError = (res, error) => {
   return res.status(error.status || 500).json({ message: error.message || "Error interno del servidor" });
 };
 
+const ensurePlanForAlumno = async (alumnoId) => {
+  const alumno = await getAlumnosRepo().obtenerPorId(alumnoId);
+  if (!alumno) {
+    const err = new Error("Alumno no encontrado");
+    err.status = 404;
+    throw err;
+  }
+
+  let plan = null;
+  if (alumno.planId) {
+    plan = await getPlanesRepo().obtenerPorId(alumno.planId);
+  }
+  if (!plan) {
+    plan = await getPlanesRepo().obtenerPorAlumnoId(alumnoId);
+  }
+
+  if (!plan) {
+    const err = new Error("El alumno no tiene un plan asignado");
+    err.status = 404;
+    throw err;
+  }
+
+  if (plan.alumnoId !== Number(alumnoId)) {
+    await getPlanesRepo().actualizarPlan(plan.id, { alumnoId: Number(alumnoId) });
+    plan.alumnoId = Number(alumnoId);
+  }
+  if (!alumno.planId || alumno.planId !== plan.id) {
+    await getAlumnosRepo().asignarPlan(alumnoId, plan.id);
+  }
+
+  return plan;
+};
+
 const parseISODate = (iso) => {
   const [y, m, d] = (iso || "").split("-").map(Number);
   if (!y || !m || !d) return null;
@@ -330,7 +363,8 @@ export const patchSesion = async (req, res) => {
       });
     }
     const updated = await getPlanesRepo().marcarSesion(req.params.alumnoId, sesiones);
-    return res.json({ plan: updated });
+    const refrescado = await getPlanesRepo().obtenerPorId(updated.id);
+    return res.json({ plan: refrescado ?? updated });
   } catch (error) {
     return handleError(res, error);
   }
