@@ -39,10 +39,11 @@ export default function PlanCalendario() {
   const searchId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("alumnoId") : null;
   const alumnoId = searchId || user?.alumnoId || user?.id || user?.userId || null; // preferimos alumnoId
 
-  const { plan, events, isLoading, error, saveAsignacion, toggleSesion, refetch } = usePlanAlumno(alumnoId);
+  const { plan, events, isLoading, error, saveAsignacion, toggleSesion, updateSesionLocal, refetch } = usePlanAlumno(alumnoId);
   const [draftAsignacion, setDraftAsignacion] = useState([]);
   const [saving, setSaving] = useState(false);
   const [sesionLoadingId, setSesionLoadingId] = useState(null);
+  const [emojiPickerFor, setEmojiPickerFor] = useState(null);
 
   useEffect(() => {
     if (!plan) return;
@@ -75,6 +76,7 @@ export default function PlanCalendario() {
             rutinaId,
             nombre,
             done: event.meta?.done ?? false,
+            feeling: event.meta?.feeling || null,
             start: event.start,
             end: event.end,
           };
@@ -107,7 +109,9 @@ export default function PlanCalendario() {
   const handleToggleSesion = async (sesion) => {
     try {
       setSesionLoadingId(sesion.key);
-      await toggleSesion(sesion.fecha, sesion.rutinaId, !sesion.done);
+      updateSesionLocal(sesion.fecha, sesion.rutinaId, { ...sesion, done: !sesion.done });
+      await toggleSesion(sesion.fecha, sesion.rutinaId, !sesion.done, sesion.start, sesion.end, sesion.feeling);
+      setEmojiPickerFor(null);
       await refetch(); // refrescamos estado para permitir edición de días sin recargar
     } finally {
       setSesionLoadingId(null);
@@ -115,8 +119,6 @@ export default function PlanCalendario() {
   };
 
   const handleHorarioChange = async (sesion, field, value) => {
-
-    if (sesion.done) return; // no permitir editar horario si está completada
     const [hh, mm] = value.split(":").map(Number);
     const base = new Date(sesion.start);
     const nuevaFecha = new Date(base);
@@ -132,7 +134,24 @@ export default function PlanCalendario() {
     }
     try {
       setSesionLoadingId(sesion.key);
-      await toggleSesion(sesion.fecha, sesion.rutinaId, sesion.done, startISO, endISO);
+      updateSesionLocal(sesion.fecha, sesion.rutinaId, {
+        ...sesion,
+        start: startISO,
+        end: endISO,
+      });
+      await toggleSesion(sesion.fecha, sesion.rutinaId, sesion.done, startISO, endISO, sesion.feeling);
+    } finally {
+      setSesionLoadingId(null);
+    }
+  };
+
+  const handleSetFeeling = async (sesion, feeling) => {
+    try {
+      setSesionLoadingId(sesion.key);
+      updateSesionLocal(sesion.fecha, sesion.rutinaId, { ...sesion, feeling });
+      await toggleSesion(sesion.fecha, sesion.rutinaId, sesion.done, sesion.start, sesion.end, feeling);
+      setEmojiPickerFor(null);
+      await refetch();
     } finally {
       setSesionLoadingId(null);
     }
@@ -235,18 +254,45 @@ export default function PlanCalendario() {
           <ul className="sesiones-lista">
             {sesionesSemana.map((sesion) => (
               <li key={sesion.key}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={sesion.done}
-                    onChange={() => handleToggleSesion(sesion)}
-                    disabled={sesionLoadingId === sesion.key}
-                  />
-                  <span>
-                    {formatFechaCorta(sesion.start)} — {sesion.nombre || `Rutina ${sesion.rutinaId}`}
-                    {sesion.done ? " (completada)" : ""}
-                  </span>
-                </label>
+                <div className="sesion-row">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={sesion.done}
+                      onChange={() => handleToggleSesion(sesion)}
+                      disabled={sesionLoadingId === sesion.key}
+                    />
+                    <span>
+                      {formatFechaCorta(sesion.start)} — {sesion.nombre || `Rutina ${sesion.rutinaId}`}
+                      {sesion.done ? " (completada)" : ""}
+                    </span>
+                  </label>
+                  <div className="emoji-picker">
+                    <button
+                      type="button"
+                      className="emoji-trigger"
+                      onClick={() => setEmojiPickerFor(prev => (prev === sesion.key ? null : sesion.key))}
+                      disabled={!sesion.done}
+                      title={sesion.feeling ? `Te sentiste: ${sesion.feeling}` : "Cómo te sentiste"}
+                    >
+                      {sesion.feeling || "😊"}
+                    </button>
+                    {emojiPickerFor === sesion.key && (
+                      <div className="emoji-menu">
+                        {["😊", "💪", "😓", "😴", "🔥", "🙂"].map((emo) => (
+                          <button
+                            key={emo}
+                            type="button"
+                            onClick={() => handleSetFeeling(sesion, emo)}
+                            disabled={sesionLoadingId === sesion.key}
+                          >
+                            {emo}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="horario-editor">
                   <label>
                     Inicio
@@ -254,7 +300,7 @@ export default function PlanCalendario() {
                       type="time"
                       value={toTimeInputValue(sesion.start)}
                       onChange={(e) => handleHorarioChange(sesion, "start", e.target.value)}
-                      disabled={sesionLoadingId === sesion.key || sesion.done}
+                      disabled={sesionLoadingId === sesion.key}
                     />
                   </label>
                   <label>
@@ -263,7 +309,7 @@ export default function PlanCalendario() {
                       type="time"
                       value={toTimeInputValue(sesion.end || sesion.start)}
                       onChange={(e) => handleHorarioChange(sesion, "end", e.target.value)}
-                      disabled={sesionLoadingId === sesion.key || sesion.done}
+                      disabled={sesionLoadingId === sesion.key}
                     />
                   </label>
                 </div>

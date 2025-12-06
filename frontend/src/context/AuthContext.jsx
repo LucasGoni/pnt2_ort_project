@@ -23,6 +23,22 @@ export function AuthProvider({ children }) {
     await storage.setItem("auth", JSON.stringify(nextAuth));
   };
 
+  const fetchAndPersistCurrentUser = async (token) => {
+    try {
+      const profile = await authService.getCurrentUser();
+      if (profile?.user) {
+        const nextAuth = { token, user: profile.user };
+        await persistAuth(nextAuth);
+        return nextAuth;
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("No se pudo obtener perfil actual:", error);
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
     const loadAuth = async () => {
       try {
@@ -31,6 +47,7 @@ export function AuthProvider({ children }) {
           const parsed = JSON.parse(storedAuth);
           if (isTokenValid(parsed)) {
             setAuth(parsed);
+            await fetchAndPersistCurrentUser(parsed.token);
           } else {
             await storage.removeItem("auth");
           }
@@ -48,16 +65,22 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const data = await authService.login(email, password);
-    const authData = { token: data.token, user: data.user };
-    await persistAuth(authData);
-    return data;
+    const profile = await fetchAndPersistCurrentUser(data.token);
+    const authData = profile ?? { token: data.token, user: data.user };
+    if (!profile) {
+      await persistAuth(authData);
+    }
+    return authData;
   };
 
   const register = async (userData) => {
     const data = await authService.register(userData);
-    const authData = { token: data.token, user: data.user };
-    await persistAuth(authData);
-    return data;
+    const profile = await fetchAndPersistCurrentUser(data.token);
+    const authData = profile ?? { token: data.token, user: data.user };
+    if (!profile) {
+      await persistAuth(authData);
+    }
+    return authData;
   };
 
   const updateUser = async (partialUser) => {

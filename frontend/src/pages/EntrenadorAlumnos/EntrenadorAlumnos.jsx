@@ -101,9 +101,8 @@ export default function EntrenadorAlumnos() {
     fetchPool();
   }, [user?.id]);
 
-  const columns = [
-    { key: "nombre", header: "Nombre", accessor: "nombre", sortable: true },
-    { key: "objetivo", header: "Objetivo", accessor: "objetivo" },
+  const columns = [
+    { key: "nombre", header: "Nombre", accessor: "nombre", sortable: true },
     { key: "email", header: "Email", accessor: "email", sortable: true },
     {
       key: "estado",
@@ -112,7 +111,7 @@ export default function EntrenadorAlumnos() {
       sortable: true,
       render: (v) => (v === "activo" ? "Activo" : "Pausado"),
     },
-  ];
+  ];
   const handleRowClick = (row) => {
     openFicha(row);
   };
@@ -294,40 +293,53 @@ export default function EntrenadorAlumnos() {
         )}
 
         {isFichaOpen && (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h3>Ficha de {selectedAlumno?.nombre}</h3>
-      <p>
-        <strong>Email:</strong> {selectedAlumno?.email}
-      </p>
+          <div className="modal-overlay">
+            <div className="modal-content" style={{ maxWidth: "420px" }}>
+              {selectedAlumno?.avatarUrl && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <img
+                    src={selectedAlumno.avatarUrl}
+                    alt={selectedAlumno.nombre || "Foto del alumno"}
+                    style={{ width: "100%", borderRadius: "12px", objectFit: "cover" }}
+                  />
+                </div>
+              )}
+              <h3 style={{ marginBottom: "0.5rem" }}>{selectedAlumno?.nombre}</h3>
+              <p style={{ margin: "0 0 0.35rem" }}>
+                <strong>Email:</strong> {selectedAlumno?.email}
+              </p>
+              {selectedAlumno?.estado && (
+                <p style={{ margin: 0 }}>
+                  <strong>Estado:</strong>{" "}
+                  {selectedAlumno.estado === "activo" ? "Activo" : "Pausado"}
+                </p>
+              )}
+              {(selectedAlumno?.peso || selectedAlumno?.altura) && (
+                <div style={{ marginTop: "0.5rem", lineHeight: "1.5" }}>
+                  {selectedAlumno?.peso ? (
+                    <div>
+                      <strong>Peso:</strong> {selectedAlumno.peso} kg
+                    </div>
+                  ) : null}
+                  {selectedAlumno?.altura ? (
+                    <div>
+                      <strong>Altura:</strong> {selectedAlumno.altura} cm
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
-      <p>
-        <strong>Peso:</strong>{" "}
-        {selectedAlumno?.peso != null ? `${selectedAlumno.peso} kg` : "No cargado"}
-      </p>
-
-      <p>
-        <strong>Altura:</strong>{" "}
-        {selectedAlumno?.altura != null ? `${selectedAlumno.altura} cm` : "No cargada"}
-      </p>
-
-      {selectedAlumno?.estado && (
-        <p>
-          <strong>Estado:</strong>{" "}
-          {selectedAlumno.estado === "activo" ? "Activo" : "Pausado"}
-        </p>
-      )}
-
-      <button
-        type="button"
-        className="primary-btn"
-        onClick={closeFicha}
-      >
-        Cerrar
-      </button>
-    </div>
-  </div>
-)}
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={closeFicha}
+                style={{ marginTop: "1rem" }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        )}
 
 
         <DataList
@@ -335,8 +347,9 @@ export default function EntrenadorAlumnos() {
           data={rows}
           loading={loading}
           searchable
-          imageAccessor={(a) => a.avatarUrl ?? "/images/alumnos/default.png"}
+          imageAccessor={(a) => a.avatarUrl ?? null}
           onRowClick={handleRowClick}
+          hideImage
           emptyText="Todavía no tenés alumnos asignados. ¡Prepará tus cartas para el próximo duelo! ✨"
           pageSizeOptions={[6, 12, 24]}
           initialPageSize={6}

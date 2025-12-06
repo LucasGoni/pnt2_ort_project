@@ -258,7 +258,6 @@ export default function CrearPlan() {
                   )}
                   <p className="plan-item-objetivo">{plan.objetivo || "Sin objetivo definido"}</p>
                   <div className="plan-item-meta">
-                    <span>{plan.vigenciaDesde || plan.vigencia?.desde || "Inicio no definido"} → {plan.vigenciaHasta || plan.vigencia?.hasta || "Fin no definido"}</span>
                     <span>{plan.rutinas?.length || 0} rutina(s)</span>
                   </div>
                   <div className="plan-assign">

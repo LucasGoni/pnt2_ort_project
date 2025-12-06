@@ -306,7 +306,24 @@ export default function EntrenadorRutinas() {
                       {!rutinaEjercicios[r.id]?.length && <li>Sin ejercicios aún.</li>}
                     </ul>
                     <div className="add-ejercicio">
-                      <button type="button" className="secondary-btn" onClick={(e) => { e.stopPropagation(); setFormsEjercicio(prev => ({ ...prev, [r.id]: prev[r.id] || { ejercicioId: "", repeticiones: "", peso: "" } })); toggleExpand(r.id); }}>
+                      <button
+                        type="button"
+                        className="secondary-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedId(r.id);
+                          setFormsEjercicio(prev => {
+                            const next = { ...prev };
+                            if (next[r.id]) {
+                              delete next[r.id]; // toggle: si estaba abierto, lo cerramos
+                            } else {
+                              next[r.id] = { ejercicioId: "", repeticiones: "", peso: "" };
+                            }
+                            return next;
+                          });
+                          setShowNuevoEjercicio(false);
+                        }}
+                      >
                         Agregar ejercicio
                       </button>
                       {formsEjercicio[r.id] && (

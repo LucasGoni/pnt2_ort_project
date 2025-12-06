@@ -25,6 +25,7 @@ const sesionSchema = Joi.object({
   done: Joi.boolean().required(),
   start: Joi.string().optional(),
   end: Joi.string().optional(),
+  feeling: Joi.string().optional(),
 });
 
 const crearPlanSchema = Joi.object({
@@ -165,6 +166,7 @@ const ensureSesiones = async (plan) => {
           start: start.toISOString(),
           end: end.toISOString(),
           done: false,
+          feeling: null,
         });
       }
     });
@@ -316,10 +318,12 @@ export const patchSesion = async (req, res) => {
     );
     const start = req.body.start || existing?.start;
     const end = req.body.end || existing?.end;
+    const feeling = typeof req.body.feeling !== "undefined" ? req.body.feeling : existing?.feeling;
     if (existing) {
       existing.done = !!req.body.done;
       if (start) existing.start = start;
       if (end) existing.end = end;
+      existing.feeling = feeling;
     } else {
       sesiones.push({
         fecha,
@@ -327,6 +331,7 @@ export const patchSesion = async (req, res) => {
         done: !!req.body.done,
         start,
         end,
+        feeling: feeling ?? null,
       });
     }
     const updated = await getPlanesRepo().marcarSesion(req.params.alumnoId, sesiones);
