@@ -3,18 +3,21 @@ import AlumnosRepo from '../modelo/alumnosRepo.js'
 import UsuariosRepo from '../modelo/usuariosRepo.js'
 import RutinasRepo from '../modelo/rutinasRepo.js'
 import PlanesRepo from '../modelo/planesRepo.js'
+import PlanAsignacionesRepo from '../modelo/planAsignacionesRepo.js'
 
 class AlumnosControlador {
     #repo = null
     #usuariosRepo = null
     #rutinasRepo = null
     #planesRepo = null
+    #planAsignacionesRepo = null
 
     constructor() {
         this.#repo = new AlumnosRepo()
         this.#usuariosRepo = new UsuariosRepo()
         this.#rutinasRepo = new RutinasRepo()
         this.#planesRepo = new PlanesRepo()
+        this.#planAsignacionesRepo = new PlanAsignacionesRepo()
     }
 
     #manejarError = (res, error, mensaje = 'Error al obtener alumnos') => {
@@ -145,14 +148,14 @@ class AlumnosControlador {
      * Relación utilizada: Plan del alumno -> rutinas (plan) -> ejercicios (rutina).
      * Se resuelve en memoria combinando el plan en cache y las rutinas persistidas.
      */
-    rutinasAsignadas = async (req, res) => {
+        rutinasAsignadas = async (req, res) => {
         try {
             const token = this.#extraerToken(req)
             const payload = validarToken(token)
 
             const alumnoId = req.params.id || req.params.alumnoId
             if (!alumnoId) {
-                const error = new Error('Alumno inválido')
+                const error = new Error('Alumno invalido')
                 error.status = 400
                 throw error
             }
@@ -164,14 +167,42 @@ class AlumnosControlador {
                 throw error
             }
 
-            const plan = await this.#planesRepo.obtenerPorAlumnoId(alumnoId)
+            const alumno = await this.#repo.obtenerPorId(alumnoId)
+            if (!alumno) {
+                const error = new Error('Alumno no encontrado')
+                error.status = 404
+                throw error
+            }
+
+            const asignacion = await this.#planAsignacionesRepo.obtenerPorAlumnoId(alumnoId)
+            let plan = null
+            if (asignacion?.planId) {
+                plan = await this.#planesRepo.obtenerPorId(asignacion.planId)
+            }
+            if (!plan && alumno.planId) {
+                plan = await this.#planesRepo.obtenerPorId(alumno.planId)
+            }
+            if (!plan) {
+                plan = await this.#planesRepo.obtenerPorAlumnoId(alumnoId)
+            }
             if (!plan) {
                 const error = new Error('El alumno no tiene un plan asignado')
                 error.status = 404
                 throw error
             }
 
-            // Rutinas asociadas al plan vía idPlan
+            if (!asignacion) {
+                await this.#planAsignacionesRepo.crearOActualizar(alumnoId, plan.id, {
+                    asignacion: plan.asignacion || [],
+                    sesiones: plan.sesiones || [],
+                    vigenciaDesde: plan.vigenciaDesde || null,
+                    vigenciaHasta: plan.vigenciaHasta || null,
+                    entrenadorId: plan.entrenadorId ?? alumno?.entrenadorId ?? null,
+                    entrenadorNombre: plan.entrenadorNombre ?? null,
+                    meta: plan.meta ?? null,
+                })
+            }
+
             const rutinas = await this.#rutinasRepo.listarPorPlan(plan.id)
 
             const respuesta = {

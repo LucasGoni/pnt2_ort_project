@@ -104,11 +104,34 @@ class RutinasRepo {
             .map(n => parseInt(n))
             .filter(n => !Number.isNaN(n))
         if (!ids.length || !planId) return 0
-        const result = await this.#rutinasModel.update(
-            { idPlan: planId },
-            { where: { id: ids } }
-        )
-        return result?.[0] ?? 0
+
+        let totalAsignadas = 0
+        for (const id of ids) {
+            const rutina = await this.#rutinasModel.findByPk(id)
+            if (!rutina) continue
+
+            // Si la rutina no está asignada o ya pertenece al plan, solo la actualizamos.
+            if (!rutina.idPlan || String(rutina.idPlan) === String(planId)) {
+                await rutina.update({ idPlan: planId })
+                totalAsignadas += 1
+                continue
+            }
+
+            // Si la rutina ya está asignada a otro plan, la clonamos para no quitarla del plan original.
+            const plain = rutina.get({ plain: true })
+            await this.#rutinasModel.create({
+                titulo: plain.titulo,
+                nivel: plain.nivel,
+                duracionMin: plain.duracionMin,
+                objetivo: plain.objetivo,
+                estado: plain.estado || 'activa',
+                idPlan: planId,
+                entrenadorId: plain.entrenadorId,
+                ejercicios: plain.ejercicios, // se almacena como TEXT
+            })
+            totalAsignadas += 1
+        }
+        return totalAsignadas
     }
 
     /**

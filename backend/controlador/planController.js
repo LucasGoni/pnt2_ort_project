@@ -6,6 +6,7 @@ import PlanesRepo from "../modelo/planesRepo.js";
 import RutinasRepo from "../modelo/rutinasRepo.js";
 import AlumnosRepo from "../modelo/alumnosRepo.js";
 import UsuariosRepo from "../modelo/usuariosRepo.js";
+import PlanAsignacionesRepo from "../modelo/planAsignacionesRepo.js";
 import { validarToken } from "../servicio/tokenService.js";
 
 const asignacionPayloadSchema = Joi.object({
@@ -51,6 +52,7 @@ let planesRepo = null;
 let rutinasRepo = null;
 let alumnosRepo = null;
 let usuariosRepo = null;
+let planAsignacionesRepo = null;
 
 const extraerToken = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -91,6 +93,11 @@ const getUsuariosRepo = () => {
   return usuariosRepo;
 };
 
+const getPlanAsignacionesRepo = () => {
+  if (!planAsignacionesRepo) planAsignacionesRepo = new PlanAsignacionesRepo();
+  return planAsignacionesRepo;
+};
+
 const handleError = (res, error) => {
   console.error("[planController] error no controlado:", error);
   return res.status(error.status || 500).json({ message: error.message || "Error interno del servidor" });
@@ -103,6 +110,93 @@ const parseISODate = (iso) => {
   return isNaN(dt.getTime()) ? null : dt;
 };
 
+const cargarPlanYAsignacionAlumno = async (alumnoId) => {
+  const alumno = await getAlumnosRepo().obtenerPorId(alumnoId);
+  if (!alumno) {
+    const err = new Error("Alumno no encontrado");
+    err.status = 404;
+    throw err;
+  }
+
+  const asignRepo = getPlanAsignacionesRepo();
+  let asignacion = await asignRepo.obtenerPorAlumnoId(alumnoId);
+
+  let plan = null;
+  if (asignacion?.planId) {
+    plan = await getPlanesRepo().obtenerPorId(asignacion.planId);
+  }
+  if (!plan && alumno?.planId) {
+    plan = await getPlanesRepo().obtenerPorId(alumno.planId);
+  }
+  if (!plan) {
+    // Compatibilidad: si existia un plan guardado con alumnoId, lo usamos para generar la asignacion.
+    plan = await getPlanesRepo().obtenerPorAlumnoId(alumnoId);
+  }
+
+  if (!plan) {
+    const err = new Error("El alumno no tiene un plan asignado");
+    err.status = 404;
+    throw err;
+  }
+
+  if (!asignacion) {
+    asignacion = await asignRepo.crearOActualizar(alumnoId, plan.id, {
+      asignacion: plan.asignacion || [],
+      sesiones: plan.sesiones || [],
+      vigenciaDesde: plan.vigenciaDesde || null,
+      vigenciaHasta: plan.vigenciaHasta || null,
+      entrenadorId: plan.entrenadorId ?? alumno?.entrenadorId ?? null,
+      entrenadorNombre: plan.entrenadorNombre ?? null,
+      meta: plan.meta ?? null,
+    });
+  } else if (plan?.id && String(asignacion.planId) !== String(plan.id)) {
+    asignacion = await asignRepo.crearOActualizar(alumnoId, plan.id, asignacion);
+  }
+
+  if (!alumno.planId || String(alumno.planId) !== String(plan.id)) {
+    await getAlumnosRepo().asignarPlan(alumnoId, plan.id);
+  }
+
+  return { alumno, plan, asignacion };
+};
+
+const armarRespuestaPlan = async (plan, asignacion, alumno) => {
+  const vigenciaDesde = asignacion?.vigenciaDesde ?? plan?.vigenciaDesde ?? null;
+  const vigenciaHasta = asignacion?.vigenciaHasta ?? plan?.vigenciaHasta ?? null;
+
+  const entrenadorId = asignacion?.entrenadorId ?? plan?.entrenadorId ?? alumno?.entrenadorId ?? null;
+  let entrenadorNombre = asignacion?.entrenadorNombre ?? plan?.entrenadorNombre ?? null;
+  if (!entrenadorNombre && entrenadorId) {
+    const entrenador = await getUsuariosRepo().buscarPorId(entrenadorId);
+    entrenadorNombre = entrenador?.nombre || entrenador?.email || null;
+  }
+
+  const rutinasDb = await getRutinasRepo().listarPorPlan(plan.id);
+  const rutinas = rutinasDb.map((r) => ({
+    id: String(r.id),
+    nombre: r.titulo || r.nombre || "Rutina",
+    descripcion: r.objetivo || "",
+    ejercicios: r.ejercicios || [],
+    idPlan: r.idPlan,
+  }));
+
+  return {
+    planId: plan.id,
+    nombre: plan.nombre,
+    objetivo: plan.objetivo,
+    vigencia: {
+      desde: vigenciaDesde,
+      hasta: vigenciaHasta,
+    },
+    entrenadorId,
+    entrenadorNombre,
+    entrenador: entrenadorNombre ? { id: entrenadorId, nombre: entrenadorNombre } : null,
+    rutinas,
+    asignacion: asignacion?.asignacion ?? [],
+    sesiones: asignacion?.sesiones ?? [],
+  };
+};
+
 const startOfWeekMonday = (date) => {
   const d = new Date(date);
   const day = d.getUTCDay(); 
@@ -112,14 +206,18 @@ const startOfWeekMonday = (date) => {
   return d;
 };
 
-const ensureSesiones = async (plan) => {
+const ensureSesiones = async (plan, asignacionPlan) => {
+  if (!asignacionPlan) return [];
+
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
-  const desdeRaw = parseISODate(plan.vigenciaDesde) ?? hoy;
+  const desdeRaw = parseISODate(asignacionPlan.vigenciaDesde || plan.vigenciaDesde) ?? hoy;
   const desdeDate = desdeRaw < hoy ? hoy : desdeRaw;
   const hastaDate =
-    parseISODate(plan.vigenciaHasta) ?? new Date(desdeDate.getTime() + 28 * 24 * 60 * 60 * 1000); 
-  const sesionesRaw = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
+    parseISODate(asignacionPlan.vigenciaHasta || plan.vigenciaHasta) ??
+    new Date(desdeDate.getTime() + 28 * 24 * 60 * 60 * 1000); 
+
+  const sesionesRaw = Array.isArray(asignacionPlan.sesiones) ? [...asignacionPlan.sesiones] : [];
   const byKeyAll = new Map();
   sesionesRaw.forEach((s) => {
     const key = `${s.fecha}_${s.rutinaId}`;
@@ -135,7 +233,11 @@ const ensureSesiones = async (plan) => {
   const byKey = new Map(sesiones.filter((s) => !s.done).map((s) => [`${s.fecha}_${s.rutinaId}`, s]));
   const nuevas = [];
 
-  const asignacion = plan.asignacion || [];
+  const asignacion =
+    (Array.isArray(asignacionPlan.asignacion) && asignacionPlan.asignacion.length
+      ? asignacionPlan.asignacion
+      : plan.asignacion) || [];
+
   const totalDays =
     Math.floor((hastaDate.getTime() - desdeDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
   for (let i = 0; i < totalDays; i++) {
@@ -172,84 +274,22 @@ const ensureSesiones = async (plan) => {
     });
   }
 
-  plan.sesiones = [...sesionesDone, ...nuevas];
-  await getPlanesRepo().actualizarPlan(plan.id, { sesiones: plan.sesiones });
+  asignacionPlan.sesiones = [...sesionesDone, ...nuevas];
+  await getPlanAsignacionesRepo().actualizarSesiones(asignacionPlan.alumnoId, asignacionPlan.sesiones);
 
-  return plan.sesiones || [];
+  return asignacionPlan.sesiones || [];
 };
 
 export const getPlan = async (req, res) => {
   try {
     const alumnoId = req.params.alumnoId;
-    const alumno = await getAlumnosRepo().obtenerPorId(alumnoId);
-    let plan = null;
-    if (alumno?.planId) {
-      plan = await getPlanesRepo().obtenerPorId(alumno.planId);
-    }
-    if (!plan) {
-      plan = await getPlanesRepo().obtenerPorAlumnoId(alumnoId);
-    }
-    if (!plan) {
-      const err = new Error("El alumno no tiene un plan asignado");
-      err.status = 404;
-      throw err;
-    }
+    const { alumno, plan, asignacion } = await cargarPlanYAsignacionAlumno(alumnoId);
 
-    const asignacionActual =
-      Array.isArray(plan.asignaciones) &&
-      plan.asignaciones.find((a) => String(a.alumnoId) === String(alumnoId));
+    await ensureSesiones(plan, asignacion);
+    const asignacionActualizada = await getPlanAsignacionesRepo().obtenerPorAlumnoId(alumnoId);
+    const response = await armarRespuestaPlan(plan, asignacionActualizada, alumno);
 
-    const vigenciaDesde = plan.vigenciaDesde || asignacionActual?.desde || null;
-    const vigenciaHasta = plan.vigenciaHasta || asignacionActual?.hasta || null;
-
-    let entrenadorId = plan.entrenadorId || asignacionActual?.asignadoPor || alumno?.entrenadorId || null;
-    let entrenadorNombre = plan.entrenadorNombre || null;
-    if (!entrenadorNombre && entrenadorId) {
-      const entrenador = await getUsuariosRepo().buscarPorId(entrenadorId);
-      entrenadorNombre = entrenador?.nombre || entrenador?.email || null;
-    }
-
-    plan.vigenciaDesde = vigenciaDesde;
-    plan.vigenciaHasta = vigenciaHasta;
-    plan.entrenadorId = plan.entrenadorId || entrenadorId;
-    plan.entrenadorNombre = plan.entrenadorNombre || entrenadorNombre;
-
-    if (String(plan.alumnoId) !== String(alumnoId)) {
-      await getPlanesRepo().actualizarPlan(plan.id, { alumnoId });
-      plan.alumnoId = alumnoId;
-    }
-    if (!alumno?.planId || String(alumno.planId) !== String(plan.id)) {
-      await getAlumnosRepo().asignarPlan(alumnoId, plan.id);
-    }
-
-    await ensureSesiones(plan);
-
-    const rutinasDb = await getRutinasRepo().listarPorPlan(plan.id);
-    const rutinas = rutinasDb.map((r) => ({
-      id: String(r.id),
-      nombre: r.titulo || r.nombre || "Rutina",
-      descripcion: r.objetivo || "",
-      ejercicios: r.ejercicios || [],
-      idPlan: r.idPlan,
-    }));
-
-    return res.json({
-      planId: plan.id,
-      nombre: plan.nombre,
-      objetivo: plan.objetivo,
-      vigencia: {
-        desde: vigenciaDesde,
-        hasta: vigenciaHasta,
-      },
-      entrenadorId: plan.entrenadorId || entrenadorId || null,
-      entrenadorNombre: plan.entrenadorNombre || entrenadorNombre || null,
-      entrenador: plan.entrenadorNombre || entrenadorNombre
-        ? { id: plan.entrenadorId || entrenadorId || null, nombre: plan.entrenadorNombre || entrenadorNombre }
-        : null,
-      rutinas,
-      asignacion: plan.asignacion,
-      sesiones: plan.sesiones,
-    });
+    return res.json(response);
   } catch (error) {
     return handleError(res, error);
   }
@@ -262,30 +302,15 @@ export const putAsignacion = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    const alumno = await getAlumnosRepo().obtenerPorId(req.params.alumnoId);
-    let plan = null;
-    if (alumno?.planId) {
-      plan = await getPlanesRepo().obtenerPorId(alumno.planId);
-    }
-    if (!plan) {
-      plan = await getPlanesRepo().obtenerPorAlumnoId(req.params.alumnoId);
-    }
-    if (!plan) {
-      const err = new Error("El alumno no tiene un plan asignado");
-      err.status = 404;
-      throw err;
-    }
+    const alumnoId = req.params.alumnoId;
+    const { alumno, plan } = await cargarPlanYAsignacionAlumno(alumnoId);
 
-    const updatedPlan = await getPlanesRepo().actualizarAsignacion(req.params.alumnoId, req.body.asignacion);
-    if (!updatedPlan) {
-      const err = new Error("El alumno no tiene un plan asignado");
-      err.status = 404;
-      throw err;
-    }
-    // Regeneramos sesiones para reflejar la nueva asignación en todo el rango
-    await ensureSesiones(updatedPlan);
-    const refreshed = await getPlanesRepo().obtenerPorId(updatedPlan.id);
-    return res.json({ plan: refreshed ?? updatedPlan });
+    const updatedAsignacion = await getPlanAsignacionesRepo().actualizarAsignacion(alumnoId, req.body.asignacion);
+    await ensureSesiones(plan, updatedAsignacion);
+    const asignacionFinal = await getPlanAsignacionesRepo().obtenerPorAlumnoId(alumnoId);
+    const response = await armarRespuestaPlan(plan, asignacionFinal, alumno);
+
+    return res.json({ plan: response });
   } catch (error) {
     return handleError(res, error);
   }
@@ -299,26 +324,15 @@ export const patchSesion = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    const alumno = await getAlumnosRepo().obtenerPorId(req.params.alumnoId);
-    let plan = null;
-    if (alumno?.planId) {
-      plan = await getPlanesRepo().obtenerPorId(alumno.planId);
-    }
-    if (!plan) {
-      plan = await getPlanesRepo().obtenerPorAlumnoId(req.params.alumnoId);
-    }
-    if (!plan) {
-      const err = new Error("El alumno no tiene un plan asignado");
-      err.status = 404;
-      throw err;
-    }
-    const sesiones = Array.isArray(plan.sesiones) ? [...plan.sesiones] : [];
+    const alumnoId = req.params.alumnoId;
+    const { alumno, plan, asignacion } = await cargarPlanYAsignacionAlumno(alumnoId);
+    const sesiones = Array.isArray(asignacion?.sesiones) ? [...asignacion.sesiones] : [];
     const existing = sesiones.find(
       (s) => s.fecha === fecha && String(s.rutinaId) === String(req.body.rutinaId)
     );
     const start = req.body.start || existing?.start;
     const end = req.body.end || existing?.end;
-    const feeling = typeof req.body.feeling !== "undefined" ? req.body.feeling : existing?.feeling;
+    const feeling = typeof req.body.feeling !== 'undefined' ? req.body.feeling : existing?.feeling;
     if (existing) {
       existing.done = !!req.body.done;
       if (start) existing.start = start;
@@ -334,8 +348,11 @@ export const patchSesion = async (req, res) => {
         feeling: feeling ?? null,
       });
     }
-    const updated = await getPlanesRepo().marcarSesion(req.params.alumnoId, sesiones);
-    return res.json({ plan: updated });
+    const updatedAsignacion = await getPlanAsignacionesRepo().actualizarSesiones(alumnoId, sesiones);
+    await ensureSesiones(plan, updatedAsignacion);
+    const asignacionFinal = await getPlanAsignacionesRepo().obtenerPorAlumnoId(alumnoId);
+    const response = await armarRespuestaPlan(plan, asignacionFinal, alumno);
+    return res.json({ plan: response });
   } catch (error) {
     return handleError(res, error);
   }
@@ -352,19 +369,35 @@ export const asignarPlan = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    const planCreado = await getPlanesRepo().crearParaAlumno(alumnoId, value);
-    // Vinculamos rutinas al plan recién creado
+    const planData = { ...value, alumnoId: null, asignaciones: [] };
+    const planCreado = await getPlanesRepo().crearParaAlumno(null, planData);
     await getRutinasRepo().asignarPlanARutinas(value.rutinas, planCreado.id);
+
+    let asignacion = await getPlanAsignacionesRepo().crearOActualizar(alumnoId, planCreado.id, {
+      asignacion: value.asignacion || [],
+      sesiones: value.sesiones || [],
+      vigenciaDesde: value.vigencia?.desde ?? value.vigenciaDesde ?? null,
+      vigenciaHasta: value.vigencia?.hasta ?? value.vigenciaHasta ?? null,
+      entrenadorId: value.entrenadorId ?? null,
+      entrenadorNombre: value.entrenadorNombre ?? null,
+      meta: value.meta ?? null,
+    });
+
+    await ensureSesiones(planCreado, asignacion);
+    asignacion = await getPlanAsignacionesRepo().obtenerPorAlumnoId(alumnoId);
     await getAlumnosRepo().asignarPlan(alumnoId, planCreado.id);
 
-    res.status(201).json({ plan: planCreado });
+    const alumno = await getAlumnosRepo().obtenerPorId(alumnoId);
+    const response = await armarRespuestaPlan(planCreado, asignacion, alumno);
+
+    res.status(201).json({ plan: response });
   } catch (error) {
     return handleError(res, error);
   }
 };
 
 /**
- * Crea un plan general (opcionalmente asociado a un alumno) con múltiples rutinas.
+ * Crea un plan general (opcionalmente asociado a un alumno) con multiples rutinas.
  */
 export const crearPlanGeneral = async (req, res) => {
   try {
@@ -392,8 +425,23 @@ export const listarPlanesGeneral = async (_req, res) => {
     const planesConRutinas = await Promise.all(
       planes.map(async (plan) => {
         const rutinas = await getRutinasRepo().listarPorPlan(plan.id);
+        const asignaciones = await getPlanAsignacionesRepo().listarPorPlan(plan.id);
+        const asignacionesEnriquecidas = await Promise.all(
+          asignaciones.map(async (asig) => {
+            await ensureSesiones(plan, asig);
+            const asignacionActual = await getPlanAsignacionesRepo().obtenerPorAlumnoId(asig.alumnoId);
+            const alumno = await getAlumnosRepo().obtenerPorId(asig.alumnoId);
+            return {
+              ...asignacionActual,
+              alumnoNombre: alumno?.nombre || asignacionActual?.alumnoNombre || `Alumno ${asig.alumnoId}`,
+              desde: asignacionActual?.vigenciaDesde ?? null,
+              hasta: asignacionActual?.vigenciaHasta ?? null,
+            };
+          })
+        );
         return {
           ...plan,
+          asignaciones: asignacionesEnriquecidas,
           rutinas: rutinas.map((r) => ({
             id: r.id,
             titulo: r.titulo || r.nombre || "Rutina",
@@ -410,7 +458,7 @@ export const listarPlanesGeneral = async (_req, res) => {
 };
 
 /**
- * Agrega una asignación de alumno/vigencia a un plan base.
+ * Agrega una asignacion de alumno/vigencia a un plan base.
  */
 export const agregarAsignacionPlan = async (req, res) => {
   try {
@@ -436,22 +484,40 @@ export const agregarAsignacionPlan = async (req, res) => {
       throw err;
     }
     if (alumno.entrenadorId && alumno.entrenadorId !== payload.id) {
-      const err = new Error("No podés asignar planes a un alumno de otro entrenador");
+      const err = new Error("No podes asignar planes a un alumno de otro entrenador");
       err.status = 403;
       throw err;
     }
-    // actualizamos planId del alumno para reflejar asignación
+    // actualizamos planId del alumno para reflejar asignacion
     await getAlumnosRepo().asignarPlan(alumnoId, planId);
 
-    const asignacion = {
-      alumnoId,
-      alumnoNombre: alumno.nombre,
-      desde: body.vigencia?.desde || null,
-      hasta: body.vigencia?.hasta || null,
+    const asignacionCreada = await getPlanAsignacionesRepo().crearOActualizar(alumnoId, planId, {
+      asignacion: plan.asignacion || [],
+      sesiones: [],
+      vigenciaDesde: body.vigencia?.desde || null,
+      vigenciaHasta: body.vigencia?.hasta || null,
+      entrenadorId: plan.entrenadorId ?? alumno?.entrenadorId ?? payload.id ?? null,
+      entrenadorNombre: plan.entrenadorNombre ?? null,
       asignadoPor: payload.id,
-    };
-    const actualizado = await getPlanesRepo().agregarAsignacion(planId, asignacion);
-    return res.status(201).json({ plan: actualizado });
+      meta: plan.meta ?? null,
+    });
+
+    await ensureSesiones(plan, asignacionCreada);
+
+    const asignaciones = await getPlanAsignacionesRepo().listarPorPlan(planId);
+    const asignacionesEnriquecidas = await Promise.all(
+      asignaciones.map(async (asig) => {
+        const al = await getAlumnosRepo().obtenerPorId(asig.alumnoId);
+        return {
+          ...asig,
+          alumnoNombre: al?.nombre || asig.alumnoNombre || `Alumno ${asig.alumnoId}`,
+          desde: asig.vigenciaDesde ?? null,
+          hasta: asig.vigenciaHasta ?? null,
+        };
+      })
+    );
+    const respuestaPlan = { ...plan, asignaciones: asignacionesEnriquecidas };
+    return res.status(201).json({ plan: respuestaPlan });
   } catch (error) {
     return handleError(res, error);
   }
@@ -480,8 +546,9 @@ export const actualizarPlanGeneral = async (req, res) => {
     await getRutinasRepo().limpiarPlan(planId);
     await getRutinasRepo().asignarPlanARutinas(value.rutinas, planId);
 
-    const updated = await getPlanesRepo().actualizarPlan(planId, { ...value, asignaciones: plan.asignaciones });
-    return res.json({ plan: updated });
+    const asignaciones = await getPlanAsignacionesRepo().listarPorPlan(planId);
+    const updated = await getPlanesRepo().actualizarPlan(planId, { ...value, asignaciones });
+    return res.json({ plan: { ...updated, asignaciones } });
   } catch (error) {
     return handleError(res, error);
   }
@@ -503,6 +570,7 @@ export const eliminarPlanGeneral = async (req, res) => {
 
     await getRutinasRepo().limpiarPlan(planId);
     await getAlumnosRepo().desasignarPorPlan(planId);
+    await getPlanAsignacionesRepo().eliminarPorPlan(planId);
     await getPlanesRepo().eliminarPlan(planId);
 
     return res.json({ message: "Plan eliminado" });
