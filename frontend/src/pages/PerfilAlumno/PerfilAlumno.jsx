@@ -48,20 +48,14 @@ export default function PerfilAlumno() {
     setMessage("");
 
     try {
-      await authService.updateProfile({
-        nombre,
-        apellido,
-        peso: peso !== "" ? Number(peso) : null,
-        altura: altura !== "" ? Number(altura) : null,
-        avatarUrl: avatarUrl || null,
-      });
-      await updateUser({
+      const { user: updated } = await authService.updateProfile({
         nombre,
         apellido,
         peso: peso !== "" ? Number(peso) : null,
         altura: altura !== "" ? Number(altura) : null,
         avatarUrl: avatarUrl || null,
       });
+      await updateUser(updated);
       setMessage("Perfil actualizado correctamente ✅");
     } catch (err) {
       console.error(err);

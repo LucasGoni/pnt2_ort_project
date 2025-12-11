@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getHomePath } from "../utils/navigation";
 import PrivateRoute from "./PrivateRoute";
 
 const RoleRoute = ({ children, allowedRoles }) => {
@@ -10,7 +11,7 @@ const RoleRoute = ({ children, allowedRoles }) => {
       {allowedRoles.includes(user?.rol) || user?.rol === "admin" ? (
         children
       ) : (
-        <Navigate to={user?.rol === "entrenador" ? "/entrenador" : "/alumno"} replace />
+        <Navigate to={getHomePath(user?.rol)} replace />
       )}
     </PrivateRoute>
   );

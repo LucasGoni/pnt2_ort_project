@@ -46,11 +46,7 @@ export function DataListCard({ row, columns, actions, onClick, imageAccessor, hi
                   className={styles.cardImage}
                   loading="lazy"
                 />
-              ) : (
-                <div className={styles.cardImagePlaceholder}>
-                  <span className={styles.placeholderText}>Sin imagen</span>
-                </div>
-              )}
+              ) : null}
             </div>
           )}
 

@@ -32,6 +32,7 @@ const mapPlanToEvents = (plan) => {
         meta: {
           rutinaId: String(sesion.rutinaId),
           done,
+          feeling: sesion.feeling || null,
         },
       };
     })
@@ -90,13 +91,14 @@ export default function usePlanAlumno(alumnoId) {
   );
 
   const toggleSesion = useCallback(
-    async (fecha, rutinaId, done, start, end) => {
+    async (fecha, rutinaId, done, start, end, feeling) => {
       try {
         const { data } = await api.patch(`/alumnos/${alumnoId}/plan/sesiones/${fecha}`, {
           rutinaId,
           done,
           start,
           end,
+          feeling,
         });
         setPlan(data.plan ?? data);
         setError(null);
@@ -110,6 +112,25 @@ export default function usePlanAlumno(alumnoId) {
     [alumnoId]
   );
 
+  const updateSesionLocal = useCallback((fecha, rutinaId, updater) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const sesiones = Array.isArray(prev.sesiones) ? [...prev.sesiones] : [];
+      const idx = sesiones.findIndex(
+        (s) => s.fecha === fecha && String(s.rutinaId) === String(rutinaId)
+      );
+      if (idx === -1) {
+        const base = typeof updater === "function" ? updater({ fecha, rutinaId }) : { ...updater, fecha, rutinaId };
+        sesiones.push(base);
+      } else {
+        const current = sesiones[idx] || {};
+        const next = typeof updater === "function" ? updater(current) : { ...current, ...updater };
+        sesiones[idx] = next;
+      }
+      return { ...prev, sesiones };
+    });
+  }, []);
+
   return {
     plan,
     events,
@@ -117,6 +138,7 @@ export default function usePlanAlumno(alumnoId) {
     error,
     saveAsignacion,
     toggleSesion,
+    updateSesionLocal,
     refetch: fetchPlan,
   };
 }

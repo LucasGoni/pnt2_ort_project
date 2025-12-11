@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { AUTH_ERRORS } from "../../constants/authErrors";
+import { getHomePath } from "../../utils/navigation";
 import "./Login.css";
 
 export default function Login() {
@@ -46,12 +47,9 @@ export default function Login() {
     try {
       const data = await login(email, password);
       const userRole = data.user.rol;
+      const homePath = getHomePath(userRole);
 
-      if (userRole === "entrenador") {
-        navigate("/entrenador");
-      } else {
-        navigate("/alumno");
-      }
+      navigate(homePath, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || AUTH_ERRORS.LOGIN_FAILED);
     } finally {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { AUTH_ERRORS } from "../../constants/authErrors";
+import { getHomePath } from "../../utils/navigation";
 import "./Register.css";
 
 export default function Register() {
@@ -60,12 +61,9 @@ export default function Register() {
     try {
       const data = await register({ nombre, email, password, rol });
       const userRole = data.user.rol;
+      const homePath = getHomePath(userRole);
 
-      if (userRole === "entrenador") {
-        navigate("/entrenador");
-      } else {
-        navigate("/alumno");
-      }
+      navigate(homePath, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || AUTH_ERRORS.REGISTRATION_FAILED);
     } finally {

@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import RoleRoute from "./components/RoleRoute";
+import PublicRoute from "./components/PublicRoute";
 import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
 import HomeEntrenador from "./pages/HomeEntrenador/HomeEntrenador.jsx";
@@ -14,14 +15,29 @@ import EntrenadorEjercicios from "./pages/EntrenadorEjercicios/EntrenadorEjercic
 import CrearPlan from "./pages/PlanEntrenador/CrearPlan.jsx";
 import PerfilEntrenador from "./pages/PerfilEntrenador/PerfilEntrenador.jsx";
 import PerfilAlumno from "./pages/PerfilAlumno/PerfilAlumno.jsx";
+import Progreso from "./pages/Progreso/Progreso.jsx";
 
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
 
         <Route
           path="/entrenador"
@@ -74,6 +90,7 @@ function App() {
         <Route path="/entrenador/ejercicios" element={<EntrenadorEjercicios />} />
         <Route path="/entrenador/perfil" element={<PerfilEntrenador />} />
         <Route path="/alumno/perfil" element={<PerfilAlumno />} />
+        <Route path="/alumno/progreso" element={<Progreso />} />
 
         <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Página no encontrada</h2>} />
       </Routes>

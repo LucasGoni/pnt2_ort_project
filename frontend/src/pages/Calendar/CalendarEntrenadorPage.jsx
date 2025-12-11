@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { parseISO, endOfDay, isValid } from "date-fns";
+import { parseISO, isValid } from "date-fns";
 import Calendar from "../../components/Calendar/Calendar";
 import "./CalendarPage.css";
 import BackButton from "../../components/BackButton.jsx";
@@ -33,22 +33,67 @@ export default function CalendarEntrenadorPage() {
           const asignaciones = Array.isArray(plan.asignaciones)
             ? plan.asignaciones
             : [];
+          const sesiones = Array.isArray(plan.sesiones) ? plan.sesiones : [];
+
+          // Preferimos mostrar sesiones concretas (día/horario elegidos por el alumno)
+          if (plan.alumnoId && sesiones.length) {
+            const asigAlumno = asignaciones.find(
+              (a) => String(a.alumnoId) === String(plan.alumnoId)
+            );
+
+            // Solo mostrar si fue asignado por este entrenador o el plan es suyo
+            const habilitado =
+              plan.entrenadorId === entrenadorId ||
+              (asigAlumno?.asignadoPor && asigAlumno.asignadoPor === entrenadorId);
+
+            if (habilitado) {
+              const alumnoNombre =
+                asigAlumno?.alumnoNombre ||
+                asigAlumno?.alumnoId ||
+                `Alumno ${plan.alumnoId}`;
+
+              sesiones.forEach((sesion) => {
+                if (!sesion.fecha) return;
+                const start = sesion.start
+                  ? new Date(sesion.start)
+                  : parseISO(sesion.fecha);
+                const end = sesion.end ? new Date(sesion.end) : null;
+                if (!isValid(start)) return;
+                if (end && !isValid(end)) return;
+
+                evts.push({
+                  title: `${alumnoNombre}${plan.nombre ? ` – ${plan.nombre}` : ""}`,
+                  start,
+                  end: end || start,
+                  kind: "sesion",
+                  meta: { done: !!sesion.done },
+                });
+              });
+            }
+            return;
+          }
 
           asignaciones.forEach((asig) => {
             if (asig.asignadoPor && asig.asignadoPor !== entrenadorId) return;
-            if (!asig.desde || !asig.hasta) return;
+            const sesiones = Array.isArray(asig.sesiones) ? asig.sesiones : [];
+            if (!sesiones.length) return; // no mostrar hasta que el alumno defina días/horarios
 
-            const start = parseISO(asig.desde);
-            const end = endOfDay(parseISO(asig.hasta));
-            if (!isValid(start) || !isValid(end)) return;
+            sesiones.forEach((sesion) => {
+              if (!sesion.fecha) return;
+              const start = sesion.start ? new Date(sesion.start) : parseISO(sesion.fecha);
+              const end = sesion.end ? new Date(sesion.end) : null;
+              if (!isValid(start)) return;
+              if (end && !isValid(end)) return;
 
-            evts.push({
-              title:
-                `${asig.alumnoNombre || `Alumno ${asig.alumnoId || ""}`}` +
-                (plan.nombre ? ` – ${plan.nombre}` : ""),
-              start,
-              end,
-              kind: "asignacion",
+              evts.push({
+                title:
+                  `${asig.alumnoNombre || `Alumno ${asig.alumnoId || ""}`}` +
+                  (plan.nombre ? ` – ${plan.nombre}` : ""),
+                start,
+                end: end || start,
+                kind: "sesion",
+                meta: { done: !!sesion.done },
+              });
             });
           });
         });
